@@ -17,6 +17,8 @@ import { ResetPassword } from './pages/auth/ResetPassword';
 // Core Pages
 import { Dashboard } from './pages/Dashboard';
 import { ProductList } from './pages/products/ProductList';
+import { ProductDetail } from './pages/products/ProductDetail';
+import { ProductForm } from './pages/products/ProductForm';
 import { CategoryList } from './pages/categories/CategoryList';
 import { WarehouseList } from './pages/warehouses/WarehouseList';
 import { WarehouseDetail } from './pages/warehouses/WarehouseDetail';
@@ -62,6 +64,9 @@ export const App: React.FC = () => {
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="products" element={<ProductList />} />
+              <Route path="products/new" element={<ProductForm key="new" />} />
+              <Route path="products/:id" element={<ProductDetail />} />
+              <Route path="products/:id/edit" element={<ProductForm key="edit" />} />
               <Route path="categories" element={<CategoryList />} />
               <Route path="warehouses" element={<WarehouseList />} />
               <Route path="warehouses/:id" element={<WarehouseDetail />} />

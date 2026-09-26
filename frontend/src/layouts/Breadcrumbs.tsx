@@ -10,7 +10,6 @@ interface Crumb {
 
 const SIMPLE: Record<string, Crumb[]> = {
   dashboard: [{ label: 'Overview' }, { label: 'Dashboard' }],
-  products: [{ label: 'Inventory' }, { label: 'Products' }],
   categories: [{ label: 'Inventory' }, { label: 'Categories' }],
   'reordering-rules': [{ label: 'Inventory' }, { label: 'Reordering Rules' }],
   locations: [{ label: 'Configuration' }, { label: 'Locations' }],
@@ -28,6 +27,16 @@ function crumbsFor(pathname: string): Crumb[] {
   const [section, sub, id, action] = pathname.split('/').filter(Boolean);
   if (!section) return [];
   if (SIMPLE[section]) return SIMPLE[section];
+
+  if (section === 'products') {
+    const list: Crumb = { label: 'Products', to: '/products' };
+    if (!sub) return [{ label: 'Inventory' }, { label: 'Products' }];
+    if (sub === 'new') return [{ label: 'Inventory' }, list, { label: 'New Product' }];
+    const detail: Crumb = { label: 'Product Details', to: `/products/${sub}` };
+    return id === 'edit'
+      ? [{ label: 'Inventory' }, list, detail, { label: 'Edit' }]
+      : [{ label: 'Inventory' }, list, { label: 'Product Details' }];
+  }
 
   if (section === 'warehouses') {
     const list: Crumb = { label: 'Warehouses', to: '/warehouses' };
