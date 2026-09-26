@@ -4,6 +4,7 @@ import type { Product, ProductStock, Location, Warehouse } from '../../types';
 import { api } from '../../services/api';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { MapPin, Warehouse as WarehouseIcon, Package } from 'lucide-react';
+import { ProductMovements } from '../operations/ProductMovements';
 
 interface ProductDetailModalProps {
   isOpen: boolean;
@@ -170,6 +171,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             </div>
           )}
         </div>
+
+        {!loading && <ProductMovements product={product} currentStock={totalQuantity} />}
       </div>
     </Modal>
   );
