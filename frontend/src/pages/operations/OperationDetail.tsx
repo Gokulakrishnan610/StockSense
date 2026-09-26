@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { notifyOperationsChanged } from '../../layouts/useNavCounts';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowRight, CheckCircle2, Edit3, XCircle } from '../../components/ui/icons';
 import { ConfirmationDialog } from '../../components/ui/ConfirmationDialog';
@@ -118,6 +119,7 @@ export const OperationDetail: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
         showToast('success', `${reference}: ${pending.label}`, 'Status updated.');
       }
       setDoc(updated);
+      notifyOperationsChanged();
     } catch (err) {
       const message = errorMessage(err, 'The action could not be completed');
       setActionError(message);

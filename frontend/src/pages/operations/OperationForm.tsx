@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Plus, Trash2 } from '../../components/ui/icons';
 import { Select, type SelectItem } from '../../components/ui/Select';
 import { ErrorState } from '../../components/ui/ErrorState';
@@ -127,6 +127,7 @@ const WarehouseSelect: React.FC<{
 
 export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const meta = DOC_KINDS[kind];
@@ -137,7 +138,14 @@ export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
 
   const [supplier, setSupplier] = useState('');
   const [notes, setNotes] = useState('');
-  const [lines, setLines] = useState<Line[]>(() => [emptyLine()]);
+  // New documents can be pre-filled from links, e.g. ?product=<id>&quantity=50.
+  const [lines, setLines] = useState<Line[]>(() => [
+    {
+      ...emptyLine(),
+      product_id: id ? '' : searchParams.get('product') ?? '',
+      quantity: id ? '' : searchParams.get('quantity') ?? '',
+    },
+  ]);
   const [originalLines, setOriginalLines] = useState<Map<string, LineSnapshot>>(new Map());
   const [status, setStatus] = useState<OperationStatusCode>('DRAFT');
   const [loading, setLoading] = useState(isEdit);
