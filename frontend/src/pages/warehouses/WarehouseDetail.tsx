@@ -167,7 +167,11 @@ export const WarehouseDetail: React.FC = () => {
     {
       key: 'product',
       header: 'Product',
-      render: (r) => <strong>{catalog.productById.get(r.product_id)?.name ?? r.product_id.slice(0, 8)}</strong>,
+      render: (r) => (
+        <Link to={`/products/${r.product_id}`} style={{ fontWeight: 600, color: 'inherit', textDecoration: 'none' }}>
+          {catalog.productById.get(r.product_id)?.name ?? r.product_id.slice(0, 8)}
+        </Link>
+      ),
     },
     {
       key: 'sku',

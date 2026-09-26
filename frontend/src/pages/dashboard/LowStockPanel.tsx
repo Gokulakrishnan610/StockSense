@@ -96,7 +96,9 @@ export const LowStockPanel: React.FC<{
                   <tr key={r.productId}>
                     <td className="truncate-cell">
                       <div className="mono-strong">{product?.sku ?? '—'}</div>
-                      <div className="cell-main" title={product?.name}>{product?.name ?? r.productId.slice(0, 8)}</div>
+                      <Link to={`/products/${r.productId}`} className="cell-main" title={product?.name} style={{ display: 'block', color: 'inherit', textDecoration: 'none' }}>
+                        {product?.name ?? r.productId.slice(0, 8)}
+                      </Link>
                       <div className="cell-sub">{category}</div>
                     </td>
                     <td className="cell-sub">{warehousesOf(r.productId)}</td>
