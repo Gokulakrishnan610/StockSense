@@ -1,0 +1,55 @@
+@import '../dashboard/dashboard.css';
+
+/* Product detail */
+.product-page { max-width: 1120px; margin: 0 auto; }
+.product-header { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+.product-header .icon-button { margin-top: 26px; }
+.product-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); background: var(--surface-card); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
+.product-kpi { display: grid; gap: 4px; padding: 16px 18px; border-right: 1px solid var(--border-color-subtle); min-width: 0; }
+.product-kpi:last-child { border-right: 0; }
+.product-kpi-label { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+.product-kpi-value { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.product-kpi-value small { font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.product-kpi-hint { font-size: 12px; color: var(--text-muted); }
+.product-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); gap: 16px; }
+.panel-title svg { color: var(--text-muted); }
+
+.stock-tree { display: grid; gap: 10px; }
+.stock-tree-root { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: #f7f7f8; border-radius: 4px; font-size: 13.5px; }
+.stock-tree-name { color: var(--text-primary); font-weight: 600; text-decoration: none; }
+.stock-tree-name:hover { color: var(--color-primary); }
+.stock-tree-qty { margin-left: auto; font-family: ui-monospace, monospace; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.stock-tree-qty.is-empty { color: var(--text-muted); font-weight: 400; }
+.stock-tree-children { margin: 4px 0 0 30px; padding-left: 12px; border-left: 1px solid var(--border-color); display: grid; gap: 2px; }
+.stock-tree-leaf { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 4px; color: var(--text-secondary); text-decoration: none; font-size: 13px; }
+.stock-tree-leaf:hover { background: var(--color-primary-light); color: var(--color-primary); }
+
+.info-list { display: grid; }
+.info-list > div { display: flex; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--border-color-subtle); font-size: 13px; }
+.info-list > div:last-child { border-bottom: 0; }
+.info-list dt { color: var(--text-muted); }
+.info-list dd { font-weight: 600; text-align: right; color: var(--text-primary); }
+
+/* Product create / edit */
+.product-form-page { max-width: 760px; margin: 0 auto; }
+.product-form-header { display: flex; align-items: flex-start; gap: 12px; padding-bottom: 18px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+.product-form-header .icon-button { margin-top: 4px; }
+.product-form { padding: 24px; }
+.form-section-title { font-size: 12px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--text-secondary); padding-bottom: 10px; margin: 8px 0 16px; border-bottom: 1px solid var(--border-color-subtle); }
+.form-section-title:not(:first-of-type) { margin-top: 24px; }
+.form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.form-hint { font-size: 12px; color: var(--text-muted); }
+.mono-input { font-family: ui-monospace, monospace; letter-spacing: .02em; }
+.product-form-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 24px -24px -24px; padding: 16px 24px; border-top: 1px solid var(--border-color-subtle); background: var(--surface-modal-footer); border-radius: 0 0 6px 6px; }
+
+@media (max-width: 960px) {
+  .product-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .product-kpi:nth-child(2) { border-right: 0; }
+  .product-kpi:nth-child(-n + 2) { border-bottom: 1px solid var(--border-color-subtle); }
+  .product-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 560px) {
+  .form-row { grid-template-columns: 1fr; }
+  .product-kpis { grid-template-columns: 1fr; }
+  .product-kpi { border-right: 0; border-bottom: 1px solid var(--border-color-subtle); }
+}
