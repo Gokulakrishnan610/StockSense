@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { RotateCcw } from '../../components/ui/icons';
 import { DataTable, type Column } from '../../components/ui/DataTable';
 import { ErrorState } from '../../components/ui/ErrorState';
@@ -29,7 +29,6 @@ const dateInputStyle: React.CSSProperties = {
   border: '1px solid var(--border-color)',
   backgroundColor: 'var(--surface-input)',
   color: 'var(--text-primary)',
-  colorScheme: 'dark',
 };
 
 const DateFilter: React.FC<{ label: string; value: string; onChange: (v: string) => void }> = ({
@@ -60,11 +59,13 @@ const dayStart = (d: string) => (d ? new Date(`${d}T00:00:00`).toISOString() : u
 const dayEnd = (d: string) => (d ? new Date(`${d}T23:59:59.999`).toISOString() : undefined);
 
 const StockLedgerTab: React.FC<{ catalog: Catalog }> = ({ catalog }) => {
-  const [type, setType] = useState('');
-  const [warehouseId, setWarehouseId] = useState('');
-  const [locationId, setLocationId] = useState('');
+  // Other pages link here with filters, e.g. ?product=<id>&location=<id>.
+  const [params] = useSearchParams();
+  const [type, setType] = useState(() => params.get('type') ?? '');
+  const [warehouseId, setWarehouseId] = useState(() => params.get('warehouse') ?? '');
+  const [locationId, setLocationId] = useState(() => params.get('location') ?? '');
   const [categoryId, setCategoryId] = useState('');
-  const [productId, setProductId] = useState('');
+  const [productId, setProductId] = useState(() => params.get('product') ?? '');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [offset, setOffset] = useState(0);
