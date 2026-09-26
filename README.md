@@ -7,6 +7,8 @@
 
 [GitHub repository](https://github.com/Gokulakrishnan610/StockSense/) · [Problem statement](docs/StockSense.pdf) · [Excalidraw board](https://app.excalidraw.com/l/65VNwvy7c4X/3ENvQFu9o8R) · [API reference](docs/API.md)
 
+**Documentation:** [Requirements](docs/REQUIREMENTS.md) · [System design](docs/SYSTEM_DESIGN.md) · [Database and ER diagram](docs/DATABASE.md) · [API](docs/API.md) · [Technical decisions](docs/TECHNICAL_DECISIONS.md) · [Testing](docs/TESTING.md) · [Demo guide](docs/DEMO_GUIDE.md)
+
 ## Contents
 
 - [Overview](#overview)
@@ -229,7 +231,7 @@ erDiagram
     LOCATIONS ||--o{ ADJUSTMENTS : counted_at
 ```
 
-This diagram shows the main relationships; [models.py](backend/app/models.py) defines the full schema, including operation creators and line locations.
+This diagram shows the main relationships. See [docs/DATABASE.md](docs/DATABASE.md) for the full ER diagram with columns, constraints and integrity rules; [models.py](backend/app/models.py) is the source of truth.
 
 | Table group | Purpose |
 | --- | --- |
@@ -443,7 +445,7 @@ StockSense/
 │   ├── src/pages/                 # Auth, dashboard, catalog and operations UI
 │   ├── src/services/api.ts        # Typed API client
 │   └── vite.config.ts             # Port 3000 and /api development proxy
-└── docs/                          # API reference, requirements and Excalidraw source/export
+└── docs/                          # Requirements, system design, database, API, ADRs, testing, demo guide, Excalidraw
 ```
 
 For implementation details, consult [backend routes](backend/app/routes.py), [operation routes](backend/app/op_routes.py), [operation services](backend/app/services/operations.py), and the [frontend API client](frontend/src/services/api.ts). The current code takes precedence over historical integration notes.
