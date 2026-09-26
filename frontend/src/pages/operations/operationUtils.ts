@@ -94,7 +94,7 @@ export const errorMessage = (err: unknown, fallback = 'Something went wrong') =>
   return e?.message || fallback;
 };
 
-async function fetchAllPages<T>(fetchPage: (offset: number, limit: number) => Promise<T[]>) {
+export async function fetchAllPages<T>(fetchPage: (offset: number, limit: number) => Promise<T[]>) {
   const limit = 100;
   const rows: T[] = [];
   for (let offset = 0; ; offset += limit) {
