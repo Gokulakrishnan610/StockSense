@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.config import get_settings
 from app.errors import DomainError
+from app.op_routes import op_router
 from app.routes import auth_router, router
 
 
@@ -67,6 +68,7 @@ def create_app() -> FastAPI:
 
     app.include_router(auth_router)
     app.include_router(router)
+    app.include_router(op_router)
     return app
 
 
