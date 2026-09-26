@@ -4,9 +4,11 @@ import {
   AlertCircle as AlertCircleGlyph,
   AlertTriangle as AlertTriangleGlyph,
   ArrowDownLeft as ArrowDownLeftGlyph,
+  ArrowDownToLine as ArrowDownToLineGlyph,
   ArrowLeft as ArrowLeftGlyph,
   ArrowLeftRight as ArrowLeftRightGlyph,
   ArrowRight as ArrowRightGlyph,
+  ArrowUpFromLine as ArrowUpFromLineGlyph,
   ArrowUpRight as ArrowUpRightGlyph,
   Boxes as BoxesGlyph,
   Check as CheckGlyph,
@@ -15,10 +17,12 @@ import {
   ChevronLeft as ChevronLeftGlyph,
   ChevronRight as ChevronRightGlyph,
   Edit3 as Edit3Glyph,
+  ExternalLink as ExternalLinkGlyph,
   Eye as EyeGlyph,
   EyeOff as EyeOffGlyph,
   FolderTree as FolderTreeGlyph,
   History as HistoryGlyph,
+  House as HouseGlyph,
   Info as InfoGlyph,
   Key as KeyGlyph,
   KeyRound as KeyRoundGlyph,
@@ -33,6 +37,8 @@ import {
   Menu as MenuGlyph,
   Package as PackageGlyph,
   PackageOpen as PackageOpenGlyph,
+  PanelLeftClose as PanelLeftCloseGlyph,
+  PanelLeftOpen as PanelLeftOpenGlyph,
   Plus as PlusGlyph,
   RefreshCw as RefreshCwGlyph,
   RotateCcw as RotateCcwGlyph,
@@ -61,9 +67,11 @@ function withIconStyle(Glyph: LucideIcon) {
 export const AlertCircle = withIconStyle(AlertCircleGlyph);
 export const AlertTriangle = withIconStyle(AlertTriangleGlyph);
 export const ArrowDownLeft = withIconStyle(ArrowDownLeftGlyph);
+export const ArrowDownToLine = withIconStyle(ArrowDownToLineGlyph);
 export const ArrowLeft = withIconStyle(ArrowLeftGlyph);
 export const ArrowLeftRight = withIconStyle(ArrowLeftRightGlyph);
 export const ArrowRight = withIconStyle(ArrowRightGlyph);
+export const ArrowUpFromLine = withIconStyle(ArrowUpFromLineGlyph);
 export const ArrowUpRight = withIconStyle(ArrowUpRightGlyph);
 export const Boxes = withIconStyle(BoxesGlyph);
 export const Check = withIconStyle(CheckGlyph);
@@ -72,10 +80,12 @@ export const ChevronDown = withIconStyle(ChevronDownGlyph);
 export const ChevronLeft = withIconStyle(ChevronLeftGlyph);
 export const ChevronRight = withIconStyle(ChevronRightGlyph);
 export const Edit3 = withIconStyle(Edit3Glyph);
+export const ExternalLink = withIconStyle(ExternalLinkGlyph);
 export const Eye = withIconStyle(EyeGlyph);
 export const EyeOff = withIconStyle(EyeOffGlyph);
 export const FolderTree = withIconStyle(FolderTreeGlyph);
 export const History = withIconStyle(HistoryGlyph);
+export const House = withIconStyle(HouseGlyph);
 export const Info = withIconStyle(InfoGlyph);
 export const Key = withIconStyle(KeyGlyph);
 export const KeyRound = withIconStyle(KeyRoundGlyph);
@@ -90,6 +100,8 @@ export const MapPin = withIconStyle(MapPinGlyph);
 export const Menu = withIconStyle(MenuGlyph);
 export const Package = withIconStyle(PackageGlyph);
 export const PackageOpen = withIconStyle(PackageOpenGlyph);
+export const PanelLeftClose = withIconStyle(PanelLeftCloseGlyph);
+export const PanelLeftOpen = withIconStyle(PanelLeftOpenGlyph);
 export const Plus = withIconStyle(PlusGlyph);
 export const RefreshCw = withIconStyle(RefreshCwGlyph);
 export const RotateCcw = withIconStyle(RotateCcwGlyph);
