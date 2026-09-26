@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
+import { useToast } from '../context/ToastContext';
 
 const COLLAPSED_KEY = 'stocksense.nav.collapsed';
 
@@ -16,6 +17,29 @@ const readCollapsed = () => {
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    const sse = new EventSource('/api/stream');
+    
+    sse.addEventListener('STOCK_UPDATE', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        showToast('info', 'Stock Updated', `${data.type} operation completed.`);
+      } catch (err) {}
+    });
+    
+    sse.addEventListener('LOW_STOCK_ALERT', (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        showToast('error', 'Low Stock Alert', `${data.product_name} (${data.sku}) is below minimum stock. Current: ${data.current}`);
+      } catch (err) {}
+    });
+    
+    return () => {
+      sse.close();
+    };
+  }, [showToast]);
 
   const toggleCollapsed = () => {
     setCollapsed((value) => {
