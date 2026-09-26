@@ -33,6 +33,7 @@
 - [Tech Stack](#️-tech-stack)
 - [Architectural Rationale & Technical Justifications](#-architectural-rationale--technical-justifications)
 - [Documentation](#documentation)
+- [AI-Powered Contextual Intelligence](#-ai-powered-contextual-intelligence)
 - [Overview](#overview)
 - [Features and permissions](#features-and-permissions)
 - [Application flow](#application-flow)
@@ -140,7 +141,71 @@ StockSense's Alembic migrations install PostgreSQL DDL triggers (`BEFORE UPDATE`
 | [Technical decisions](docs/TECHNICAL_DECISIONS.md) | Architecture decision records and their trade-offs |
 | [Testing](docs/TESTING.md) | Test strategy, suite inventory, current results, CI and a manual checklist |
 | [Demo guide](docs/DEMO_GUIDE.md) | Seed data, demo accounts and a timed demo script |
+| [AI assistant](docs/AI_ASSISTANT.md) | Ask StockSense: Grok features, grounding, guardrails and configuration |
 | [Docs index](docs/README.md) | All documents with a suggested reading order |
+
+## 🤖 AI-Powered Contextual Intelligence
+
+StockSense includes **Ask StockSense** — a Grok-powered, context-aware AI assistant that answers inventory questions in natural language, grounded entirely in live PostgreSQL data. Unlike generic chatbots, every response is derived from a **real-time data snapshot** of your inventory, making hallucinated numbers structurally impossible.
+
+### Context-Aware Grounding
+
+The assistant automatically detects **what page you're on** and tailors its data context accordingly:
+
+| You're viewing… | AI automatically knows about… |
+| --- | --- |
+| **Dashboard** | Catalog counts, low/out-of-stock products, per-product totals, open operations, today's ledger, 7-day movement trends |
+| **A specific product** | Stock totals per location, category, unit, reorder rules, open documents referencing it, 30-day ledger history |
+| **A warehouse** | All locations, stock per location, product totals, 7-day ledger at its locations |
+| **A receipt, delivery, or transfer** | Status, supplier/notes, creator, all lines, current stock at each source, ledger rows the document posted |
+| **An adjustment** | Counted vs. recorded quantities, percentage difference, reason, prior adjustments for the product, 90-day ledger |
+
+Click **×** on the context chip to switch to whole-inventory mode, or **Use this page** to re-attach the page context.
+
+### `@` Mention Tagging
+
+Type `@` (or tap the **@** button) to **tag up to 5 products or warehouses** directly in your question. The tagged records' full data snapshots are merged into the AI context, enabling cross-entity questions like:
+
+- *"Compare stock of @Steel-Rod and @Copper-Wire across all warehouses"*
+- *"Does @Chennai-Warehouse have enough @USB-C-Cable for the pending delivery?"*
+
+### What You Can Ask
+
+| Capability | Example |
+| --- | --- |
+| **Inventory search** | *"Show products below reorder level"*, *"Which items are out of stock?"* |
+| **Dashboard summary** | *"Summarize the current dashboard"* → *"8 products in stock, 0 low, 2 deliveries pending…"* |
+| **Movement explanation** | *"What happened to Steel Rod this week?"* |
+| **Activity report** | *"Give me a summary of today's inventory activity"* |
+| **Adjustment analysis** | *"Explain this adjustment. Is the difference unusual?"* |
+| **Operation overview** | *"Summarize pending receipts, deliveries and transfers"* |
+
+### Guardrails and Safety
+
+| Concern | How it's handled |
+| --- | --- |
+| **Hallucinated numbers** | System rules require answers from the snapshot only; temperature is 0.2. If data is missing, the AI says so. |
+| **AI mutating stock** | The endpoint has **no write path** — context builders only run `SELECT` queries. Tests verify ledger, balances, and document status remain unchanged. |
+| **Prompt injection** | User-entered text (notes, reasons) is labelled as data in the snapshot; system rules treat it as data, never instructions. |
+| **Unauthorized access** | Route requires a valid JWT. Staff and managers see the same read-only data. |
+| **Provider failures** | Errors are sanitized to status codes (`AI_PROVIDER_ERROR`, `AI_TIMEOUT`). The API key is never logged or returned. |
+
+### Data-Only Fallback Mode
+
+When no AI API key is configured, Ask StockSense **still works** — it returns structured key facts directly from PostgreSQL without calling an external LLM. This means the feature is always available, even in air-gapped or cost-sensitive deployments. The drawer header shows **Grok · model** when a key is set, and **Data-only mode** when it is not.
+
+### Configuration
+
+Add these to `backend/.env` to enable full AI mode:
+
+```dotenv
+AI_API_KEY=<your xAI API key>
+AI_BASE_URL=https://api.x.ai/v1      # Grok (default)
+AI_MODEL=grok-3-mini                 # any Grok chat model your key can use
+AI_TIMEOUT_SECONDS=30
+```
+
+The client uses the OpenAI-compatible `/chat/completions` API, so any compatible provider works (e.g., Groq at `https://api.groq.com/openai/v1`). See the full [AI Assistant documentation](docs/AI_ASSISTANT.md) for architecture details, context snapshots, and test coverage.
 
 ---
 
@@ -241,6 +306,7 @@ Every requirement from the Odoo problem statement is addressed. Below is a full 
 
 | Feature | Description |
 | --- | --- |
+| **AI Assistant (Ask StockSense)** | Grok-powered, context-aware AI grounded in live PostgreSQL data — zero hallucinations, read-only, page-aware, `@mention` tagging |
 | **Real-Time SSE Notifications** | `GET /stream` broadcasts `STOCK_UPDATE` and `LOW_STOCK_ALERT` events; browser renders toast without polling |
 | **Celery Email Worker** | OTP emails, low-stock manager alerts via background Celery task with Redis broker — SMTP outage never blocks HTTP responses |
 | **Immutable Audit Triggers** | PostgreSQL DDL triggers on `stock_ledger` physically block any mutation — not just application-level guards |
@@ -276,6 +342,7 @@ The [StockSense problem statement](docs/StockSense.pdf) and Excalidraw designs d
 | Warehouse settings | Multiple warehouses and locations within each warehouse |
 | Notifications | SSE toast notifications and Celery email tasks; see current limitations below |
 | Printing | Browser print slips for operation documents; no server PDF endpoint |
+| Ask StockSense (AI) | Grok-powered, read-only assistant that answers from live data: dashboard summaries, low- and out-of-stock search, movement explanations, adjustment explanations, activity reports. Understands the current page and `@` tags; see [AI assistant](docs/AI_ASSISTANT.md) |
 
 | Action | Inventory manager | Warehouse staff |
 | --- | --- | --- |
