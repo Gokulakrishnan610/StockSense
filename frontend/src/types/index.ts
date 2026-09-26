@@ -112,3 +112,114 @@ export interface DashboardFilter {
   locationId?: string;
   categoryId?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Operations (Member 2 API) — statuses and movement types are backend values.
+// ---------------------------------------------------------------------------
+
+export type OperationStatusCode = 'DRAFT' | 'WAITING' | 'READY' | 'DONE' | 'CANCELED';
+export type MovementType = 'INITIAL' | 'RECEIPT' | 'DELIVERY' | 'TRANSFER' | 'ADJUSTMENT';
+
+interface OperationBase {
+  id: string;
+  notes: string;
+  status: OperationStatusCode;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Receipt extends OperationBase {
+  supplier: string;
+}
+
+export type Delivery = OperationBase;
+export type Transfer = OperationBase;
+
+export interface ReceiptItem {
+  id: string;
+  receipt_id: string;
+  product_id: string;
+  location_id: string;
+  quantity: string;
+}
+
+export interface DeliveryItem {
+  id: string;
+  delivery_id: string;
+  product_id: string;
+  location_id: string;
+  quantity: string;
+}
+
+export interface TransferItem {
+  id: string;
+  transfer_id: string;
+  product_id: string;
+  source_location_id: string;
+  destination_location_id: string;
+  quantity: string;
+}
+
+export interface LocationItemInput {
+  product_id: string;
+  location_id: string;
+  quantity: string;
+}
+
+export interface TransferItemInput {
+  product_id: string;
+  source_location_id: string;
+  destination_location_id: string;
+  quantity: string;
+}
+
+export interface Adjustment {
+  id: string;
+  product_id: string;
+  location_id: string;
+  counted_quantity: string;
+  recorded_quantity: string | null;
+  delta: string | null;
+  reason: string;
+  status: OperationStatusCode;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdjustmentInput {
+  product_id: string;
+  location_id: string;
+  counted_quantity: string;
+  reason: string;
+}
+
+export interface LedgerEntry {
+  id: string;
+  product_id: string;
+  location_id: string;
+  transaction_type: MovementType;
+  reference_id: string;
+  quantity: string;
+  before_quantity: string;
+  after_quantity: string;
+  from_location_id: string | null;
+  to_location_id: string | null;
+  user_id: string;
+  user_name: string;
+  created_at: string;
+}
+
+export interface LedgerFilter {
+  product_id?: string;
+  location_id?: string;
+  warehouse_id?: string;
+  category_id?: string;
+  transaction_type?: MovementType;
+  reference_id?: string;
+  date_from?: string;
+  date_to?: string;
+  offset?: number;
+  limit?: number;
+}

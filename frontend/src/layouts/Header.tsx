@@ -34,6 +34,7 @@ export const Header: React.FC<HeaderProps> = ({ onMenuToggle }) => {
     if (path.startsWith('/reordering-rules')) return 'Reordering Rules';
     if (path.startsWith('/operations/receipts')) return 'Operations / Receipts';
     if (path.startsWith('/operations/deliveries')) return 'Operations / Delivery Orders';
+    if (path.startsWith('/operations/transfers')) return 'Operations / Internal Transfers';
     if (path.startsWith('/operations/adjustments')) return 'Operations / Inventory Adjustments';
     if (path.startsWith('/operations/move-history')) return 'Operations / Move History';
     if (path.startsWith('/profile')) return 'User Profile';

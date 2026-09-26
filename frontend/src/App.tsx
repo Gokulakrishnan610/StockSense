@@ -23,11 +23,18 @@ import { LocationList } from './pages/locations/LocationList';
 import { ReorderRuleList } from './pages/reordering/ReorderRuleList';
 import { Profile } from './pages/Profile';
 
-// Operations Stubs for Member 4
-import { ReceiptsStub } from './pages/operations/ReceiptsStub';
-import { DeliveryOrdersStub } from './pages/operations/DeliveryOrdersStub';
-import { InventoryAdjustmentsStub } from './pages/operations/InventoryAdjustmentsStub';
-import { MoveHistoryStub } from './pages/operations/MoveHistoryStub';
+// Operations & Stock Ledger (Member 4)
+import {
+  AdjustmentList,
+  DeliveryList,
+  ReceiptList,
+  TransferList,
+} from './pages/operations/OperationPages';
+import { OperationForm } from './pages/operations/OperationForm';
+import { OperationDetail } from './pages/operations/OperationDetail';
+import { AdjustmentForm } from './pages/operations/AdjustmentForm';
+import { AdjustmentDetail } from './pages/operations/AdjustmentDetail';
+import { MoveHistory } from './pages/operations/MoveHistory';
 
 export const App: React.FC = () => {
   return (
@@ -60,11 +67,23 @@ export const App: React.FC = () => {
               <Route path="reordering-rules" element={<ReorderRuleList />} />
               <Route path="profile" element={<Profile />} />
 
-              {/* Member 4 Operations Navigation */}
-              <Route path="operations/receipts" element={<ReceiptsStub />} />
-              <Route path="operations/deliveries" element={<DeliveryOrdersStub />} />
-              <Route path="operations/adjustments" element={<InventoryAdjustmentsStub />} />
-              <Route path="operations/move-history" element={<MoveHistoryStub />} />
+              {/* Operations & Stock Ledger (Member 4) */}
+              <Route path="operations/receipts" element={<ReceiptList />} />
+              <Route path="operations/receipts/new" element={<OperationForm key="receipt-new" kind="receipt" />} />
+              <Route path="operations/receipts/:id" element={<OperationDetail kind="receipt" />} />
+              <Route path="operations/receipts/:id/edit" element={<OperationForm key="receipt-edit" kind="receipt" />} />
+              <Route path="operations/deliveries" element={<DeliveryList />} />
+              <Route path="operations/deliveries/new" element={<OperationForm key="delivery-new" kind="delivery" />} />
+              <Route path="operations/deliveries/:id" element={<OperationDetail kind="delivery" />} />
+              <Route path="operations/deliveries/:id/edit" element={<OperationForm key="delivery-edit" kind="delivery" />} />
+              <Route path="operations/transfers" element={<TransferList />} />
+              <Route path="operations/transfers/new" element={<OperationForm key="transfer-new" kind="transfer" />} />
+              <Route path="operations/transfers/:id" element={<OperationDetail kind="transfer" />} />
+              <Route path="operations/transfers/:id/edit" element={<OperationForm key="transfer-edit" kind="transfer" />} />
+              <Route path="operations/adjustments" element={<AdjustmentList />} />
+              <Route path="operations/adjustments/new" element={<AdjustmentForm />} />
+              <Route path="operations/adjustments/:id" element={<AdjustmentDetail />} />
+              <Route path="operations/move-history" element={<MoveHistory />} />
             </Route>
 
             {/* Fallback Catch-all */}

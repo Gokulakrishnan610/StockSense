@@ -10,6 +10,7 @@ import {
   Boxes,
   ArrowDownLeft,
   ArrowUpRight,
+  ArrowLeftRight,
   RefreshCw,
   History,
   ChevronDown,
@@ -43,8 +44,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
   const operationsItems = [
     { label: 'Receipts', path: '/operations/receipts', icon: <ArrowDownLeft size={16} /> },
     { label: 'Delivery Orders', path: '/operations/deliveries', icon: <ArrowUpRight size={16} /> },
+    { label: 'Internal Transfers', path: '/operations/transfers', icon: <ArrowLeftRight size={16} /> },
     { label: 'Inventory Adjustment', path: '/operations/adjustments', icon: <RefreshCw size={16} /> },
-    { label: 'Move History', path: '/operations/move-history', icon: <History size={16} /> },
+    { label: 'Move History / Ledger', path: '/operations/move-history', icon: <History size={16} /> },
   ];
 
   return (
@@ -194,7 +196,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
               {operationsOpen && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', paddingLeft: '28px', marginTop: '4px' }}>
                   {operationsItems.map((op) => {
-                    const active = location.pathname === op.path;
+                    const active = location.pathname.startsWith(op.path);
                     return (
                       <NavLink
                         key={op.path}
