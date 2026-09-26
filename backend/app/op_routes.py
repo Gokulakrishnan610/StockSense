@@ -377,6 +377,21 @@ def product_stock_detail(
 
 
 # ---------------------------------------------------------------------------
+# OPERATION SUMMARY
+# ---------------------------------------------------------------------------
+
+
+@op_router.get(
+    "/operations/summary",
+    response_model=dict[str, dict[str, int]],
+    tags=["Inventory"],
+)
+def operations_summary(db: DB):
+    """Operation counts per document type and status, for navigation badges and KPIs."""
+    return ops.operation_summary(db)
+
+
+# ---------------------------------------------------------------------------
 # LOW-STOCK ALERTS
 # ---------------------------------------------------------------------------
 

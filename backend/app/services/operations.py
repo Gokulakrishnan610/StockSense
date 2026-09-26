@@ -670,6 +670,27 @@ def get_product_stock(
 
 
 # ---------------------------------------------------------------------------
+# OPERATION SUMMARY
+# ---------------------------------------------------------------------------
+
+
+def operation_summary(db: Session) -> dict[str, dict[str, int]]:
+    """Count operations per document type and status (all statuses present, zero-filled)."""
+    summary = {}
+    for key, model in (
+        ("receipts", Receipt),
+        ("deliveries", Delivery),
+        ("transfers", Transfer),
+        ("adjustments", Adjustment),
+    ):
+        counts = dict.fromkeys(("DRAFT", "WAITING", "READY", "DONE", "CANCELED"), 0)
+        rows = db.execute(select(model.status, func.count()).group_by(model.status)).all()
+        counts.update({status: count for status, count in rows})
+        summary[key] = counts
+    return summary
+
+
+# ---------------------------------------------------------------------------
 # LOW-STOCK ALERTS
 # ---------------------------------------------------------------------------
 
