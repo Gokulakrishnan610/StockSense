@@ -122,27 +122,18 @@ export const Dashboard: React.FC = () => {
       selectedStatus === 'All'
         ? ['DRAFT', 'WAITING', 'READY']
         : [selectedStatus.toUpperCase() as OperationStatusCode];
-    const count = async (
-      fetchPage: (status: OperationStatusCode, offset: number, limit: number) => Promise<unknown[]>
-    ) => {
-      let total = 0;
-      for (const status of statuses) {
-        for (let offset = 0; ; offset += 100) {
-          const page = await fetchPage(status, offset, 100);
-          total += page.length;
-          if (page.length < 100) break;
-        }
-      }
-      return total;
-    };
+    const count = (byStatus: Record<OperationStatusCode, number>) =>
+      statuses.reduce((sum, status) => sum + byStatus[status], 0);
     let active = true;
-    Promise.all([
-      count((st, o, l) => api.getReceipts(st, o, l)),
-      count((st, o, l) => api.getDeliveries(st, o, l)),
-      count((st, o, l) => api.getTransfers(st, o, l)),
-    ])
-      .then(([receipts, deliveries, transfers]) => {
-        if (active) setOperationCounts({ receipts, deliveries, transfers });
+    api
+      .getOperationSummary()
+      .then((summary) => {
+        if (!active) return;
+        setOperationCounts({
+          receipts: count(summary.receipts),
+          deliveries: count(summary.deliveries),
+          transfers: count(summary.transfers),
+        });
       })
       .catch(() => {});
     return () => {
