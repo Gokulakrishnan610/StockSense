@@ -7,6 +7,8 @@ import type {
   LedgerEntry,
   LedgerFilter,
   LocationItemInput,
+  LowStockAlert,
+  OperationSummary,
   OperationStatusCode,
   Receipt,
   ReceiptItem,
@@ -482,6 +484,27 @@ class ApiService {
       if (value !== undefined && value !== '') query.append(key, String(value));
     });
     return this.request<LedgerEntry[]>(`/inventory/ledger?${query.toString()}`);
+  }
+
+  // Inventory overview
+  async getOperationSummary(): Promise<OperationSummary> {
+    return this.request<OperationSummary>('/operations/summary');
+  }
+
+  async getInventoryStock(
+    params: { warehouse_id?: string; location_id?: string; offset?: number; limit?: number } = {}
+  ): Promise<ProductStock[]> {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') query.append(key, String(value));
+    });
+    return this.request<ProductStock[]>(`/inventory/stock?${query.toString()}`);
+  }
+
+  async getLowStockAlerts(offset = 0, limit = 100): Promise<LowStockAlert[]> {
+    return this.request<LowStockAlert[]>(
+      `/inventory/alerts/low-stock?offset=${offset}&limit=${limit}`
+    );
   }
 }
 

@@ -223,3 +223,16 @@ export interface LedgerFilter {
   offset?: number;
   limit?: number;
 }
+
+/** Operation counts per document type and status (GET /operations/summary). */
+export type OperationSummary = Record<
+  'receipts' | 'deliveries' | 'transfers' | 'adjustments',
+  Record<OperationStatusCode, number>
+>;
+
+export interface LowStockAlert {
+  product_id: string;
+  minimum_stock: string;
+  reorder_quantity: string;
+  total_quantity: string;
+}
