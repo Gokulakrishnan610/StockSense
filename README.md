@@ -7,10 +7,9 @@
 
 [GitHub repository](https://github.com/Gokulakrishnan610/StockSense/) · [Problem statement](docs/StockSense.pdf) · [Excalidraw board](https://app.excalidraw.com/l/65VNwvy7c4X/3ENvQFu9o8R) · [API reference](docs/API.md)
 
-**Documentation:** [Requirements](docs/REQUIREMENTS.md) · [System design](docs/SYSTEM_DESIGN.md) · [Database and ER diagram](docs/DATABASE.md) · [API](docs/API.md) · [Technical decisions](docs/TECHNICAL_DECISIONS.md) · [Testing](docs/TESTING.md) · [Demo guide](docs/DEMO_GUIDE.md)
-
 ## Contents
 
+- [Documentation](#documentation)
 - [Overview](#overview)
 - [Features and permissions](#features-and-permissions)
 - [Application flow](#application-flow)
@@ -23,6 +22,19 @@
 - [Odoo-provided Excalidraw design](#odoo-provided-excalidraw-design)
 - [Implementation notes and next steps](#implementation-notes-and-next-steps)
 - [Repository structure](#repository-structure)
+
+## Documentation
+
+| Document | What it covers |
+| --- | --- |
+| [Requirements](docs/REQUIREMENTS.md) | Problem statement, target users, and a requirement-to-code traceability matrix |
+| [System design](docs/SYSTEM_DESIGN.md) | Architecture, auth, operation state machine, stock flows, locking, events and configuration |
+| [Database and ER diagram](docs/DATABASE.md) | Full ER diagram, every table and constraint, integrity guarantees and migrations |
+| [API reference](docs/API.md) | Every endpoint with access rules, request bodies, filters and errors |
+| [Technical decisions](docs/TECHNICAL_DECISIONS.md) | Architecture decision records and their trade-offs |
+| [Testing](docs/TESTING.md) | Test strategy, suite inventory, current results, CI and a manual checklist |
+| [Demo guide](docs/DEMO_GUIDE.md) | Seed data, demo accounts and a timed demo script |
+| [Docs index](docs/README.md) | All documents with a suggested reading order |
 
 ## Overview
 
