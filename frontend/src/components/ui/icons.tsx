@@ -17,6 +17,7 @@ import {
   ChevronLeft as ChevronLeftGlyph,
   ChevronRight as ChevronRightGlyph,
   Clock as ClockGlyph,
+  Copy as CopyGlyph,
   Edit3 as Edit3Glyph,
   ExternalLink as ExternalLinkGlyph,
   Eye as EyeGlyph,
@@ -41,6 +42,7 @@ import {
   PanelLeftClose as PanelLeftCloseGlyph,
   PanelLeftOpen as PanelLeftOpenGlyph,
   Plus as PlusGlyph,
+  Printer as PrinterGlyph,
   RefreshCw as RefreshCwGlyph,
   RotateCcw as RotateCcwGlyph,
   Search as SearchGlyph,
@@ -81,6 +83,7 @@ export const ChevronDown = withIconStyle(ChevronDownGlyph);
 export const ChevronLeft = withIconStyle(ChevronLeftGlyph);
 export const ChevronRight = withIconStyle(ChevronRightGlyph);
 export const Clock = withIconStyle(ClockGlyph);
+export const Copy = withIconStyle(CopyGlyph);
 export const Edit3 = withIconStyle(Edit3Glyph);
 export const ExternalLink = withIconStyle(ExternalLinkGlyph);
 export const Eye = withIconStyle(EyeGlyph);
@@ -105,6 +108,7 @@ export const PackageOpen = withIconStyle(PackageOpenGlyph);
 export const PanelLeftClose = withIconStyle(PanelLeftCloseGlyph);
 export const PanelLeftOpen = withIconStyle(PanelLeftOpenGlyph);
 export const Plus = withIconStyle(PlusGlyph);
+export const Printer = withIconStyle(PrinterGlyph);
 export const RefreshCw = withIconStyle(RefreshCwGlyph);
 export const RotateCcw = withIconStyle(RotateCcwGlyph);
 export const Search = withIconStyle(SearchGlyph);
