@@ -8,7 +8,12 @@ __pycache__/
 *.db
 *.egg-info/
 backend/.postgres/
-mockup/
-docs/
+mockup/*
+!mockup/*.png
+docs/*
+!docs/*.md
+!docs/StockSense.pdf
+!docs/StockSense - 8 hours.excalidraw
+!docs/StockSense - 8 hours.png
 frontend/node_modules/
 frontend/dist/
