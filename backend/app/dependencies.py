@@ -11,7 +11,7 @@ from app.db import get_db
 from app.errors import DomainError
 from app.models import User
 
-DB = Annotated[Session, Depends(get_db, scope="function")]
+DB = Annotated[Session, Depends(get_db)]
 bearer = HTTPBearer(auto_error=False)
 
 
@@ -38,7 +38,7 @@ def current_user(
         raise error from exc
 
 
-CurrentUser = Annotated[User, Depends(current_user, scope="function")]
+CurrentUser = Annotated[User, Depends(current_user)]
 
 
 def manager(user: CurrentUser) -> User:
@@ -47,4 +47,4 @@ def manager(user: CurrentUser) -> User:
     return user
 
 
-Manager = Annotated[User, Depends(manager, scope="function")]
+Manager = Annotated[User, Depends(manager)]

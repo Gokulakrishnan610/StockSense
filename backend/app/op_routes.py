@@ -17,7 +17,7 @@ from app import op_schemas as s
 from app.dependencies import DB, CurrentUser, Manager, current_user
 from app.services import operations as ops
 
-op_router = APIRouter(dependencies=[Depends(current_user, scope="function")])
+op_router = APIRouter(dependencies=[Depends(current_user)])
 
 Offset = Annotated[int, Query(ge=0)]
 Limit = Annotated[int, Query(ge=1, le=100)]
