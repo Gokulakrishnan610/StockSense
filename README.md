@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="logo.png" alt="StockSense Logo" width="250" />
+  <img src="logo.png" alt="StockSense Logo" width="250" style="background-color: white; padding: 15px; border-radius: 12px;" />
 
   # 👑 StockSense
   ### The Unrivaled Standard in Enterprise Inventory Management
