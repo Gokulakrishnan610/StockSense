@@ -1,5 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor
 from decimal import Decimal
+from threading import Barrier
 from uuid import UUID
 
 import pytest
@@ -134,6 +135,66 @@ def test_concurrent_retry_records_once(engine, catalog):
     with Session(engine) as db:
         assert db.scalar(select(StockBalance.quantity)) == Decimal("105.25")
         assert db.scalar(select(func.count()).select_from(StockLedger)) == 2
+
+
+def test_competing_deductions_cannot_oversell(engine, catalog):
+    args = movement(engine, catalog)
+    start = Barrier(2)
+
+    def deduct(i):
+        with Session(engine) as db:
+            start.wait(timeout=10)
+            try:
+                with db.begin():
+                    apply_delta(
+                        db,
+                        **{
+                            **args,
+                            "delta": Decimal("-80"),
+                            "transaction_type": "DELIVERY",
+                            "entry_key": f"deduct-{i}",
+                        },
+                    )
+                return "COMPLETED"
+            except DomainError as exc:
+                return exc.code
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        outcomes = list(pool.map(deduct, range(2)))
+    assert sorted(outcomes) == ["COMPLETED", "INSUFFICIENT_STOCK"]
+    with Session(engine) as db:
+        assert db.scalar(select(StockBalance.quantity)) == Decimal("20.25")
+        assert db.scalar(select(func.count()).select_from(StockLedger)) == 2
+
+
+def test_concurrent_first_entries_create_one_balance(engine, catalog):
+    args = {**movement(engine, catalog), "location_id": UUID(catalog["locations"][1]["id"])}
+    start = Barrier(4)
+
+    def receive(i):
+        with Session(engine) as db, db.begin():
+            start.wait(timeout=10)
+            apply_delta(db, **{**args, "entry_key": f"first-{i}"})
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        list(pool.map(receive, range(4)))
+    with Session(engine) as db:
+        rows = db.scalars(
+            select(StockBalance).where(StockBalance.location_id == args["location_id"])
+        ).all()
+        assert len(rows) == 1
+        assert rows[0].quantity == Decimal("20")
+        entries = db.scalars(
+            select(StockLedger)
+            .where(StockLedger.location_id == args["location_id"])
+            .order_by(StockLedger.before_quantity)
+        ).all()
+        assert [(entry.before_quantity, entry.after_quantity) for entry in entries] == [
+            (Decimal("0"), Decimal("5")),
+            (Decimal("5"), Decimal("10")),
+            (Decimal("10"), Decimal("15")),
+            (Decimal("15"), Decimal("20")),
+        ]
 
 
 @pytest.mark.parametrize(
