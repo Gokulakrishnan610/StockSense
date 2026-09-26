@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowRight, Plus, Trash2 } from '../../components/ui/icons';
+import { Select, type SelectItem } from '../../components/ui/Select';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { useToast } from '../../context/ToastContext';
@@ -80,27 +81,27 @@ const LocationSelect: React.FC<{
   const warehouses = warehouseId
     ? catalog.warehouses.filter((w) => w.id === warehouseId)
     : catalog.warehouses;
+
+  const items: SelectItem[] = warehouseId
+    ? catalog.locations
+        .filter((l) => l.warehouse_id === warehouseId)
+        .map((l) => ({ value: l.id, label: `${l.name} (${l.short_code})` }))
+    : warehouses.map((w) => ({
+        label: `${w.name} (${w.short_code})`,
+        options: catalog.locations
+          .filter((l) => l.warehouse_id === w.id)
+          .map((l) => ({ value: l.id, label: `${l.name} (${l.short_code})` })),
+      }));
+
   return (
-    <select
-      className="form-input"
+    <Select
       value={value}
-      onChange={(e) => onChange(e.target.value)}
+      onChange={onChange}
+      options={items}
+      placeholder="Select location"
       disabled={disabled}
       aria-label={ariaLabel}
-    >
-      <option value="">Select location</option>
-      {warehouses.map((w) => (
-        <optgroup key={w.id} label={`${w.name} (${w.short_code})`}>
-          {catalog.locations
-            .filter((l) => l.warehouse_id === w.id)
-            .map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.name} ({l.short_code})
-              </option>
-            ))}
-        </optgroup>
-      ))}
-    </select>
+    />
   );
 };
 
@@ -111,20 +112,17 @@ const WarehouseSelect: React.FC<{
   disabled?: boolean;
   ariaLabel: string;
 }> = ({ catalog, value, onChange, disabled, ariaLabel }) => (
-  <select
-    className="form-input"
+  <Select
     value={value}
-    onChange={(e) => onChange(e.target.value)}
+    onChange={onChange}
+    options={[
+      { value: '', label: 'Any warehouse' },
+      ...catalog.warehouses.map((w) => ({ value: w.id, label: `${w.name} (${w.short_code})` })),
+    ]}
+    placeholder="Any warehouse"
     disabled={disabled}
     aria-label={ariaLabel}
-  >
-    <option value="">Any warehouse</option>
-    {catalog.warehouses.map((w) => (
-      <option key={w.id} value={w.id}>
-        {w.name} ({w.short_code})
-      </option>
-    ))}
-  </select>
+  />
 );
 
 export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
@@ -419,20 +417,14 @@ export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
                 >
                   <div>
                     <label className="form-label">#{index + 1} Product *</label>
-                    <select
-                      className="form-input"
+                    <Select
                       value={line.product_id}
-                      onChange={(e) => updateLine(line.key, { product_id: e.target.value })}
+                      onChange={(v) => updateLine(line.key, { product_id: v })}
+                      options={catalog.products.map((p) => ({ value: p.id, label: `${p.name} (${p.sku})` }))}
+                      placeholder="Select product"
                       disabled={busy}
                       aria-label={`Item ${index + 1} product`}
-                    >
-                      <option value="">Select product</option>
-                      {catalog.products.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({p.sku})
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
 
                   {kind === 'transfer' && (

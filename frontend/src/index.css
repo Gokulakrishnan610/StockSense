@@ -351,3 +351,181 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--color-primary);
 @media (max-width: 420px) { .kpi-grid-4 { grid-template-columns: 1fr; } }
 .sidebar-nav { overflow-x: hidden; }
 .nav-section, .nav-group { grid-template-columns: minmax(0, 1fr); }
+
+/* ============================================================
+   Custom Select Component (ss-select-*)
+   ============================================================ */
+
+/* Wrapper --------------------------------------------------- */
+.ss-select-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ss-select-wrap-filter {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Label ----------------------------------------------------- */
+.ss-select-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+/* Trigger --------------------------------------------------- */
+.ss-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  background: var(--surface-input);
+  color: var(--text-primary);
+  border-radius: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+  user-select: none;
+  white-space: nowrap;
+  min-width: 0;
+}
+.ss-select-trigger:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+.ss-select-trigger:hover:not(.ss-select-disabled) {
+  border-color: #bbb;
+}
+.ss-select-trigger.ss-select-open {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent);
+}
+.ss-select-trigger.ss-select-disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--surface-table-header);
+}
+
+/* Filter (pill) variant */
+.ss-select-filter {
+  padding: 7px 10px 7px 12px;
+  font-size: 0.8125rem;
+  min-width: 140px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+/* Form variant */
+.ss-select-form {
+  padding: 9px 10px 9px 12px;
+  font-size: 0.875rem;
+  width: 100%;
+  border-radius: 8px;
+}
+
+/* Value text */
+.ss-select-value {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ss-select-placeholder {
+  color: var(--text-muted);
+}
+
+/* Chevron icon */
+.ss-select-chevron {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  color: var(--text-muted);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ss-select-chevron-up {
+  transform: rotate(180deg);
+  color: var(--color-primary);
+}
+
+/* Dropdown portal ------------------------------------------- */
+.ss-select-portal {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  min-width: 180px;
+  background: var(--surface-card);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+  animation: ss-dropdown-in 0.12s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes ss-dropdown-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+/* Option list */
+.ss-select-list {
+  list-style: none;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px;
+}
+.ss-select-list::-webkit-scrollbar { width: 5px; }
+.ss-select-list::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+/* Option item */
+.ss-select-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 0.8125rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.1s;
+  position: relative;
+}
+.ss-select-option-indent {
+  padding-left: 16px;
+}
+.ss-select-option:hover,
+.ss-select-option.ss-select-focused {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+.ss-select-option.ss-select-selected {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+/* Check icon inside selected option */
+.ss-select-check {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  color: var(--color-primary);
+}
+
+/* Group header */
+.ss-select-group {
+  list-style: none;
+}
+.ss-select-group-label {
+  padding: 6px 10px 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}

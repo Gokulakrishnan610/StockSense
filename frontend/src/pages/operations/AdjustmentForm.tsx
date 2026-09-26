@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Select } from '../../components/ui/Select';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { useToast } from '../../context/ToastContext';
@@ -121,57 +122,39 @@ export const AdjustmentForm: React.FC = () => {
         >
           <div className="form-group">
             <label className="form-label" htmlFor="adj-product">Product *</label>
-            <select
+            <Select
               id="adj-product"
-              className="form-input"
               value={productId}
-              onChange={(e) => setProductId(e.target.value)}
+              onChange={setProductId}
+              options={catalog.products.map((p) => ({ value: p.id, label: `${p.name} (${p.sku})` }))}
+              placeholder="Select product"
               disabled={busy}
-            >
-              <option value="">Select product</option>
-              {catalog.products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} ({p.sku})
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div className="form-group">
             <label className="form-label" htmlFor="adj-warehouse">Warehouse</label>
-            <select
+            <Select
               id="adj-warehouse"
-              className="form-input"
               value={warehouseId}
-              onChange={(e) => {
-                setWarehouseId(e.target.value);
-                setLocationId('');
-              }}
+              onChange={(v) => { setWarehouseId(v); setLocationId(''); }}
+              options={[
+                { value: '', label: 'All warehouses' },
+                ...catalog.warehouses.map((w) => ({ value: w.id, label: `${w.name} (${w.short_code})` })),
+              ]}
+              placeholder="All warehouses"
               disabled={busy}
-            >
-              <option value="">All warehouses</option>
-              {catalog.warehouses.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name} ({w.short_code})
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div className="form-group">
             <label className="form-label" htmlFor="adj-location">Location *</label>
-            <select
+            <Select
               id="adj-location"
-              className="form-input"
               value={locationId}
-              onChange={(e) => setLocationId(e.target.value)}
+              onChange={setLocationId}
+              options={locations.map((l) => ({ value: l.id, label: catalog.locationLabel(l.id) }))}
+              placeholder="Select location"
               disabled={busy}
-            >
-              <option value="">Select location</option>
-              {locations.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {catalog.locationLabel(l.id)}
-                </option>
-              ))}
-            </select>
+            />
           </div>
         </div>
 
@@ -226,20 +209,14 @@ export const AdjustmentForm: React.FC = () => {
 
         <div className="form-group">
           <label className="form-label" htmlFor="adj-reason">Reason *</label>
-          <select
+          <Select
             id="adj-reason"
-            className="form-input"
             value={reason}
-            onChange={(e) => setReason(e.target.value)}
+            onChange={setReason}
+            options={REASONS.map((r) => ({ value: r, label: r }))}
+            placeholder="Select reason"
             disabled={busy}
-          >
-            <option value="">Select reason</option>
-            {REASONS.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
         <div className="form-group">

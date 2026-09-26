@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { DataTable, type Column } from '../../components/ui/DataTable';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';
+import { Select } from '../../components/ui/Select';
 import { Modal } from '../../components/ui/Modal';
 import { ErrorState } from '../../components/ui/ErrorState';
 
@@ -270,19 +271,13 @@ export const LocationList: React.FC = () => {
 
           <div className="form-group">
             <label className="form-label">Parent Warehouse *</label>
-            <select
-              className="form-input"
+            <Select
               value={warehouseId}
-              onChange={(e) => setWarehouseId(e.target.value)}
+              onChange={setWarehouseId}
+              options={warehouses.map((w) => ({ value: w.id, label: `${w.name} (${w.short_code})` }))}
+              placeholder="Select warehouse"
               disabled={submitting || Boolean(editingLocation)}
-            >
-              <option value="" disabled>Select warehouse</option>
-              {warehouses.map((w) => (
-                <option key={w.id} value={w.id}>
-                  {w.name} ({w.short_code})
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           <div className="form-group">

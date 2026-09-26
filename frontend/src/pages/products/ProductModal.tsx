@@ -4,6 +4,7 @@ import type { Product, Category, Location, ProductCreateInput, ProductInput } fr
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { AlertCircle } from '../../components/ui/icons';
+import { Select } from '../../components/ui/Select';
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -192,19 +193,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
           <div className="form-group">
             <label className="form-label">Category *</label>
-            <select
-              className="form-input"
+            <Select
               value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
+              onChange={setCategoryId}
+              options={categories.map((cat) => ({ value: cat.id, label: cat.name }))}
+              placeholder="Select category"
               disabled={submitting}
-            >
-              <option value="" disabled>Select category</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+            />
             {fieldErrors.categoryId && <div className="form-error">{fieldErrors.categoryId}</div>}
           </div>
 
@@ -252,19 +247,13 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
               <div className="form-group" style={{ margin: 0 }}>
                 <label className="form-label">Initial Storage Location</label>
-                <select
-                  className="form-input"
+                <Select
                   value={initialLocationId}
-                  onChange={(e) => setInitialLocationId(e.target.value)}
+                  onChange={setInitialLocationId}
+                  options={locations.map((loc) => ({ value: loc.id, label: `${loc.name} (${loc.short_code})` }))}
+                  placeholder="Select location"
                   disabled={submitting || parseFloat(initialStock) <= 0}
-                >
-                  <option value="">Select location</option>
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.id}>
-                      {loc.name} ({loc.short_code})
-                    </option>
-                  ))}
-                </select>
+                />
                 {fieldErrors.initialLocationId && (
                   <div className="form-error">{fieldErrors.initialLocationId}</div>
                 )}

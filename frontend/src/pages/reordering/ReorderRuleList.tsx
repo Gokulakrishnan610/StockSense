@@ -6,6 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { DataTable, type Column } from '../../components/ui/DataTable';
 import { Modal } from '../../components/ui/Modal';
+import { Select } from '../../components/ui/Select';
 import { ErrorState } from '../../components/ui/ErrorState';
 
 export const ReorderRuleList: React.FC = () => {
@@ -249,19 +250,13 @@ export const ReorderRuleList: React.FC = () => {
 
           <div className="form-group">
             <label className="form-label">Select Product *</label>
-            <select
-              className="form-input"
+            <Select
               value={productId}
-              onChange={(e) => setProductId(e.target.value)}
+              onChange={setProductId}
+              options={products.map((p) => ({ value: p.id, label: `${p.name} (${p.sku})` }))}
+              placeholder="Select product"
               disabled={submitting || Boolean(editingRule)}
-            >
-              <option value="" disabled>Select product</option>
-              {products.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} ({p.sku})
-                </option>
-              ))}
-            </select>
+            />
           </div>
 
           <div className="form-group">
