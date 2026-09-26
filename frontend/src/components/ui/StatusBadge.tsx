@@ -86,6 +86,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({ status, label }) => {
         border: border,
         letterSpacing: '0.02em',
         textTransform: 'uppercase',
+        whiteSpace: 'nowrap',
       }}
     >
       {displayText}

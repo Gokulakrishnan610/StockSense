@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Edit3, Warehouse as WarehouseIcon, MapPin, AlertCircle } from '../../components/ui/icons';
+import { Link, useNavigate } from 'react-router-dom';
+import { Plus, Edit3, Eye, Warehouse as WarehouseIcon, MapPin, AlertCircle } from '../../components/ui/icons';
 import { api } from '../../services/api';
 import type { Warehouse, Location } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -11,6 +12,7 @@ import { ErrorState } from '../../components/ui/ErrorState';
 export const WarehouseList: React.FC = () => {
   const { isManager } = useAuth();
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -109,10 +111,13 @@ export const WarehouseList: React.FC = () => {
       key: 'name',
       header: 'Warehouse Name',
       render: (w) => (
-        <span style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+        <Link
+          to={`/warehouses/${w.id}`}
+          style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: '8px', color: 'var(--text-primary)', textDecoration: 'none' }}
+        >
           <WarehouseIcon size={16} style={{ color: 'var(--text-muted)' }} />
           {w.name}
-        </span>
+        </Link>
       ),
     },
     {
@@ -139,23 +144,34 @@ export const WarehouseList: React.FC = () => {
       key: 'actions',
       header: 'Actions',
       align: 'right',
-      render: (w) =>
-        isManager ? (
+      render: (w) => (
+        <div style={{ display: 'inline-flex', gap: '6px' }}>
           <button
-            onClick={() => {
-              setEditingWarehouse(w);
-              setName(w.name);
-              setShortCode(w.short_code);
-              setAddress(w.address || '');
-              setModalError('');
-              setIsModalOpen(true);
-            }}
+            onClick={() => navigate(`/warehouses/${w.id}`)}
             className="btn btn-secondary btn-sm"
             style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+            title="View locations and stock"
           >
-            <Edit3 size={14} /> Edit
+            <Eye size={14} /> View
           </button>
-        ) : null,
+          {isManager && (
+            <button
+              onClick={() => {
+                setEditingWarehouse(w);
+                setName(w.name);
+                setShortCode(w.short_code);
+                setAddress(w.address || '');
+                setModalError('');
+                setIsModalOpen(true);
+              }}
+              className="btn btn-secondary btn-sm"
+              style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+            >
+              <Edit3 size={14} /> Edit
+            </button>
+          )}
+        </div>
+      ),
     },
   ];
 

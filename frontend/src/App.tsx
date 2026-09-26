@@ -19,6 +19,7 @@ import { Dashboard } from './pages/Dashboard';
 import { ProductList } from './pages/products/ProductList';
 import { CategoryList } from './pages/categories/CategoryList';
 import { WarehouseList } from './pages/warehouses/WarehouseList';
+import { WarehouseDetail } from './pages/warehouses/WarehouseDetail';
 import { LocationList } from './pages/locations/LocationList';
 import { ReorderRuleList } from './pages/reordering/ReorderRuleList';
 import { Profile } from './pages/Profile';
@@ -63,6 +64,7 @@ export const App: React.FC = () => {
               <Route path="products" element={<ProductList />} />
               <Route path="categories" element={<CategoryList />} />
               <Route path="warehouses" element={<WarehouseList />} />
+              <Route path="warehouses/:id" element={<WarehouseDetail />} />
               <Route path="locations" element={<LocationList />} />
               <Route path="reordering-rules" element={<ReorderRuleList />} />
               <Route path="profile" element={<Profile />} />
