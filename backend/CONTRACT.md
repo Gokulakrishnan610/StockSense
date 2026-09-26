@@ -161,6 +161,8 @@ with Session(engine) as db, db.begin():
 
 Use deterministic entry keys per operation/line/location leg. An exact replay
 returns the existing entry; the same key with different arguments returns a conflict.
+`reference_id` and `entry_key` must be nonblank strings, at most 120 and 180
+characters respectively. Invalid references are rejected before any stock mutation.
 For transfers, post a negative source delta and positive destination delta with
 distinct keys, identical reference IDs, and source/destination metadata, all in one
 transaction. The global sum remains unchanged. Member 2 owns workflow validation,

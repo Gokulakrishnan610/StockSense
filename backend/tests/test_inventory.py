@@ -43,6 +43,38 @@ def test_idempotent_delta_and_conflicting_retry(engine, catalog):
         assert db.scalar(select(func.count()).select_from(StockLedger)) == 2
 
 
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("reference_id", ""),
+        ("reference_id", "  "),
+        ("reference_id", "r" * 121),
+        ("entry_key", ""),
+        ("entry_key", "\t"),
+        ("entry_key", "k" * 181),
+    ],
+)
+def test_invalid_movement_reference_does_not_change_stock(engine, catalog, field, value):
+    args = movement(engine, catalog)
+    with Session(engine) as db, db.begin():
+        with pytest.raises(DomainError) as caught:
+            apply_delta(db, **{**args, field: value})
+        assert caught.value.code == "INVALID_MOVEMENT_REFERENCE"
+        assert caught.value.status == 422
+        # Even if the caller catches the error and commits, no changes are left behind.
+    with Session(engine) as db:
+        assert db.scalar(select(StockBalance.quantity)) == Decimal("100.25")
+        assert db.scalar(select(func.count()).select_from(StockLedger)) == 1
+
+
+def test_maximum_length_movement_references_are_valid(engine, catalog):
+    args = {**movement(engine, catalog), "reference_id": "r" * 120, "entry_key": "k" * 180}
+    with Session(engine) as db, db.begin():
+        entry = apply_delta(db, **args)
+        assert entry.reference_id == args["reference_id"]
+        assert entry.entry_key == args["entry_key"]
+
+
 def test_delta_rollback_and_insufficient_stock(engine, catalog):
     args = movement(engine, catalog)
     with pytest.raises(RuntimeError), Session(engine) as db, db.begin():

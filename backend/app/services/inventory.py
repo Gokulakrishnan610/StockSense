@@ -26,6 +26,16 @@ def apply_delta(
     Lock products in UUID order before multi-product operations. Transfers call this
     twice with distinct stable entry keys inside the same transaction.
     """
+    for field, value, maximum in (
+        ("reference_id", reference_id, 120),
+        ("entry_key", entry_key, 180),
+    ):
+        if not isinstance(value, str) or not value.strip() or len(value) > maximum:
+            raise DomainError(
+                422,
+                "INVALID_MOVEMENT_REFERENCE",
+                f"{field} must be nonblank text with at most {maximum} characters",
+            )
     if (
         not delta.is_finite()
         or delta == 0
