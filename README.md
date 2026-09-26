@@ -18,7 +18,7 @@
 - [API endpoints](#api-endpoints)
 - [Local setup](#local-setup)
 - [Checks and testing](#checks-and-testing)
-- [Excalidraw and screen references](#excalidraw-and-screen-references)
+- [Odoo-provided Excalidraw design](#odoo-provided-excalidraw-design)
 - [Implementation notes and next steps](#implementation-notes-and-next-steps)
 - [Repository structure](#repository-structure)
 
@@ -388,74 +388,16 @@ npm run build
 
 A manual smoke test should cover signup/login, manager catalog setup, a receipt, delivery, transfer, adjustment, and corresponding Move History entries. Verify that insufficient stock is rejected and that a completed document cannot be edited. Test OTP email with the worker and local SMTP inbox running.
 
-## Excalidraw and screen references
+## Odoo-provided Excalidraw design
 
-The following assets are **design references**, not screenshots of the running application.
+The **StockSense - 8 hours** Excalidraw design was provided by **Odoo** as the reference design for this project.
 
-- [Shared Excalidraw board](https://app.excalidraw.com/l/65VNwvy7c4X/3ENvQFu9o8R)
+- [Odoo-provided Excalidraw board](https://app.excalidraw.com/l/65VNwvy7c4X/3ENvQFu9o8R)
 - [Editable local Excalidraw file](docs/StockSense%20-%208%20hours.excalidraw) — import it into Excalidraw if the shared board is unavailable.
 - [Full-resolution exported diagram](docs/StockSense%20-%208%20hours.png)
 - [Original problem statement PDF](docs/StockSense.pdf)
 
-[![StockSense Excalidraw overview showing authentication, dashboard, warehouse settings and stock operations](docs/StockSense%20-%208%20hours.png)](docs/StockSense%20-%208%20hours.png)
-
-The overview is a large canvas; open the full image or expand the screen references for details.
-
-<details>
-<summary>Login and signup</summary>
-
-![Excalidraw design: Login and signup](mockup/Screenshot%202026-09-26%20at%209.03.00%E2%80%AFAM.png)
-
-</details>
-
-<details>
-<summary>Dashboard and navigation</summary>
-
-![Excalidraw design: Dashboard and navigation](mockup/Screenshot%202026-09-26%20at%209.03.17%E2%80%AFAM.png)
-
-</details>
-
-<details>
-<summary>Stock overview</summary>
-
-![Excalidraw design: Stock overview](mockup/Screenshot%202026-09-26%20at%209.03.30%E2%80%AFAM.png)
-
-</details>
-
-<details>
-<summary>Warehouse and location settings</summary>
-
-![Excalidraw design: Warehouse and location settings](mockup/Screenshot%202026-09-26%20at%209.04.02%E2%80%AFAM.png)
-
-</details>
-
-<details>
-<summary>Receipt list</summary>
-
-![Excalidraw design: Receipt list](mockup/Screenshot%202026-09-26%20at%209.04.17%E2%80%AFAM.png)
-
-</details>
-
-<details>
-<summary>Receipt detail and validation</summary>
-
-![Excalidraw design: Receipt detail and validation](mockup/Screenshot%202026-09-26%20at%209.04.31%E2%80%AFAM.png)
-
-</details>
-
-<details>
-<summary>Delivery detail and validation</summary>
-
-![Excalidraw design: Delivery detail and validation](mockup/Screenshot%202026-09-26%20at%209.04.52%E2%80%AFAM.png)
-
-</details>
-
-<details>
-<summary>Delivery list</summary>
-
-![Excalidraw design: Delivery list](mockup/Screenshot%202026-09-26%20at%209.05.03%E2%80%AFAM.png)
-
-</details>
+[![Odoo-provided StockSense - 8 hours Excalidraw design](docs/StockSense%20-%208%20hours.png)](docs/StockSense%20-%208%20hours.png)
 
 ## Implementation notes and next steps
 
@@ -502,7 +444,7 @@ StockSense/
 │   ├── src/services/api.ts        # Typed API client
 │   └── vite.config.ts             # Port 3000 and /api development proxy
 ├── docs/                          # API reference, requirements and Excalidraw source/export
-└── mockup/                        # Original screen reference images
+└── mockup/                        # Zoomed captures of the Odoo-provided Excalidraw design
 ```
 
 For implementation details, consult [backend routes](backend/app/routes.py), [operation routes](backend/app/op_routes.py), [operation services](backend/app/services/operations.py), and the [frontend API client](frontend/src/services/api.ts). The current code takes precedence over historical integration notes.
