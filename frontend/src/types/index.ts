@@ -228,7 +228,9 @@ export interface LedgerFilter {
 export type OperationSummary = Record<
   'receipts' | 'deliveries' | 'transfers' | 'adjustments',
   Record<OperationStatusCode, number>
->;
+> & {
+  lifetime_validations?: Record<string, number>;
+};
 
 export interface LowStockAlert {
   product_id: string;

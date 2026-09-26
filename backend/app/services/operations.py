@@ -38,6 +38,9 @@ from app.models import (
     User,
 )
 from app.services.inventory import apply_delta
+from app.services import sse
+from app import tasks
+from app.redis_client import increment_operation_counter, get_operation_counters
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -93,6 +96,50 @@ def _remove_item(db: Session, parent_model, item_model, fk_name: str, parent_id:
         raise not_found(item_model.__name__)
     db.delete(item)
     db.flush()
+
+
+def _check_low_stock_and_notify(db: Session, product_ids: list[UUID]):
+    if not product_ids:
+        return
+    
+    total_stock_sub = (
+        select(
+            StockBalance.product_id,
+            func.sum(StockBalance.quantity).label("total_quantity"),
+        )
+        .where(StockBalance.product_id.in_(product_ids))
+        .group_by(StockBalance.product_id)
+        .subquery()
+    )
+    
+    q = (
+        select(
+            Product.name,
+            Product.sku,
+            ReorderRule.minimum_stock,
+            func.coalesce(total_stock_sub.c.total_quantity, Decimal("0")).label("total_quantity"),
+        )
+        .join(ReorderRule, Product.id == ReorderRule.product_id)
+        .outerjoin(total_stock_sub, Product.id == total_stock_sub.c.product_id)
+        .where(
+            Product.id.in_(product_ids),
+            func.coalesce(total_stock_sub.c.total_quantity, Decimal("0")) <= ReorderRule.minimum_stock
+        )
+    )
+    
+    low_stock_items = db.execute(q).all()
+    if not low_stock_items:
+        return
+        
+    managers = db.scalars(select(User.email).where(User.role == 'INVENTORY_MANAGER')).all()
+    
+    for name, sku, min_qty, total_qty in low_stock_items:
+        sse.broadcast("LOW_STOCK_ALERT", {"product_name": name, "sku": sku, "current": str(total_qty), "minimum": str(min_qty)})
+        for email in managers:
+            try:
+                tasks.send_low_stock_alert_task.delay(email, name, sku, str(total_qty), str(min_qty))
+            except Exception:
+                pass
 
 
 # ---------------------------------------------------------------------------
@@ -189,6 +236,9 @@ def validate_receipt(db: Session, receipt_id: UUID, *, user_id: UUID) -> Receipt
 
     receipt.status = "DONE"
     db.flush()
+    increment_operation_counter("RECEIPT")
+    _check_low_stock_and_notify(db, product_ids)
+    sse.broadcast("STOCK_UPDATE", {"type": "RECEIPT", "id": str(receipt_id)})
     return receipt
 
 
@@ -326,6 +376,9 @@ def validate_delivery(db: Session, delivery_id: UUID, *, user_id: UUID) -> Deliv
 
     delivery.status = "DONE"
     db.flush()
+    increment_operation_counter("DELIVERY")
+    _check_low_stock_and_notify(db, product_ids)
+    sse.broadcast("STOCK_UPDATE", {"type": "DELIVERY", "id": str(delivery_id)})
     return delivery
 
 
@@ -466,6 +519,9 @@ def validate_transfer(db: Session, transfer_id: UUID, *, user_id: UUID) -> Trans
 
     transfer.status = "DONE"
     db.flush()
+    increment_operation_counter("TRANSFER")
+    _check_low_stock_and_notify(db, product_ids)
+    sse.broadcast("STOCK_UPDATE", {"type": "TRANSFER", "id": str(transfer_id)})
     return transfer
 
 
@@ -558,6 +614,9 @@ def validate_adjustment(db: Session, adjustment_id: UUID, *, user_id: UUID) -> A
 
     adjustment.status = "DONE"
     db.flush()
+    increment_operation_counter("ADJUSTMENT")
+    _check_low_stock_and_notify(db, [adjustment.product_id])
+    sse.broadcast("STOCK_UPDATE", {"type": "ADJUSTMENT", "id": str(adjustment_id)})
     return adjustment
 
 
@@ -687,6 +746,12 @@ def operation_summary(db: Session) -> dict[str, dict[str, int]]:
         rows = db.execute(select(model.status, func.count()).group_by(model.status)).all()
         counts.update({status: count for status, count in rows})
         summary[key] = counts
+        
+    # Append Redis atomic metrics
+    redis_metrics = get_operation_counters()
+    if redis_metrics:
+        summary["lifetime_validations"] = redis_metrics
+        
     return summary
 
 
