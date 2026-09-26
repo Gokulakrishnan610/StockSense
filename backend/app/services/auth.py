@@ -9,8 +9,7 @@ from app.errors import DomainError
 from app.models import PasswordReset, User
 from app.schemas import Signup
 from app.security import DUMMY_HASH, access_token, password_hasher, secret_digest
-from app.services import mailer
-
+from app import tasks
 
 def signup(db: Session, data: Signup) -> User:
     user = User(
@@ -20,6 +19,10 @@ def signup(db: Session, data: Signup) -> User:
     )
     db.add(user)
     db.flush()
+    try:
+        tasks.send_welcome_email_task.delay(user.email, user.name)
+    except Exception:
+        pass  # Don't fail signup if email task dispatch fails
     return user
 
 
@@ -66,7 +69,7 @@ def forgot_password(db: Session, email: str):
     challenge.attempts = 0
     challenge.reset_token_hash = None
     db.flush()
-    mailer.send_reset_code(email, otp)
+    tasks.send_reset_code_task.delay(email, otp)
 
 
 def verify_otp(db: Session, email: str, otp: str) -> dict:
