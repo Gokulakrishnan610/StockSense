@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { notifyOperationsChanged } from '../../layouts/useNavCounts';
 import { useParams } from 'react-router-dom';
 import { CheckCircle2, XCircle } from '../../components/ui/icons';
 import { ConfirmationDialog } from '../../components/ui/ConfirmationDialog';
@@ -96,6 +97,7 @@ export const AdjustmentDetail: React.FC = () => {
         setAdjustment(await api.cancelAdjustment(adjustment.id));
         showToast('info', `${reference} canceled`, 'No stock was changed.');
       }
+      notifyOperationsChanged();
     } catch (err) {
       const message = errorMessage(err, 'The action could not be completed');
       setActionError(message);

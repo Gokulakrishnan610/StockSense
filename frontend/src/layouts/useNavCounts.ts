@@ -2,6 +2,11 @@ import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 
+const CHANGED_EVENT = 'stocksense:operations-changed';
+
+/** Call after an operation changes status so the sidebar badges refresh immediately. */
+export const notifyOperationsChanged = () => window.dispatchEvent(new Event(CHANGED_EVENT));
+
 export interface NavCounts {
   receipts?: number;
   deliveries?: number;
@@ -19,6 +24,13 @@ export interface NavCounts {
 export function useNavCounts(): NavCounts {
   const { pathname } = useLocation();
   const [counts, setCounts] = useState<NavCounts>({});
+  const [version, setVersion] = useState(0);
+
+  useEffect(() => {
+    const bump = () => setVersion((v) => v + 1);
+    window.addEventListener(CHANGED_EVENT, bump);
+    return () => window.removeEventListener(CHANGED_EVENT, bump);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -45,7 +57,7 @@ export function useNavCounts(): NavCounts {
     return () => {
       active = false;
     };
-  }, [pathname]);
+  }, [pathname, version]);
 
   return counts;
 }
