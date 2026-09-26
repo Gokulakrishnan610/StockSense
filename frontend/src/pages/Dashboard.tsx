@@ -20,11 +20,10 @@ import { DOC_KINDS, STATUS_LABELS, docRef, useCatalog, type DocKind } from './op
 import { KpiCard } from './dashboard/DashboardParts';
 import { relativeTime } from './dashboard/dashboardUtils';
 import { LowStockPanel } from './dashboard/LowStockPanel';
-import { MovementSummary } from './dashboard/MovementSummary';
 import { PendingQueue } from './dashboard/PendingQueue';
 import { RecentActivity } from './dashboard/RecentActivity';
 import './dashboard/dashboard.css';
-import { PENDING_STATUSES, useDashboardData, type Period, type QueueDoc } from './dashboard/useDashboardData';
+import { PENDING_STATUSES, useDashboardData, type QueueDoc } from './dashboard/useDashboardData';
 
 const NEW_OPERATIONS: Array<{ kind: DocKind; Icon: typeof Package }> = [
   { kind: 'receipt', Icon: ArrowDownToLine },
@@ -41,9 +40,8 @@ export const Dashboard: React.FC = () => {
   const [status, setStatus] = useState('');
   const [warehouseId, setWarehouseId] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [period, setPeriod] = useState<Period>('24h');
 
-  const { data, loading, error, updatedAt, reload } = useDashboardData({ warehouseId, categoryId, period });
+  const { data, loading, error, updatedAt, reload } = useDashboardData({ warehouseId, categoryId });
 
   const balances = useMemo(() => data?.balances ?? [], [data]);
 
@@ -151,17 +149,17 @@ export const Dashboard: React.FC = () => {
       )}
 
       <div className="dash-kpis">
-        <KpiCard label="Total Products" tag="Catalog" tone="neutral" value={productCount}
+        <KpiCard label="Total Products" tone="neutral" value={productCount}
           hint={`${inStock} with stock on hand`} icon={<Package size={20} />} onClick={() => navigate('/products')} />
-        <KpiCard label="Low Stock" tag="Reorder" tone="warning" value={lowStock}
+        <KpiCard label="Low Stock" tone="warning" value={lowStock}
           hint="At or below minimum level" icon={<AlertTriangle size={20} />} onClick={() => navigate('/reordering-rules')} />
-        <KpiCard label="Out of Stock" tag="Critical" tone="danger" value={outOfStock}
+        <KpiCard label="Out of Stock" tone="danger" value={outOfStock}
           hint="Zero on hand" icon={<AlertCircle size={20} />} onClick={() => navigate('/products')} />
-        <KpiCard label="Pending Receipts" tag="Inbound" tone="info" value={pending('receipt')}
+        <KpiCard label="Pending Receipts" tone="info" value={pending('receipt')}
           hint="Awaiting validation" icon={<ArrowDownToLine size={20} />} onClick={() => navigate(DOC_KINDS.receipt.path)} />
-        <KpiCard label="Pending Deliveries" tag="Outbound" tone="info" value={pending('delivery')}
+        <KpiCard label="Pending Deliveries" tone="info" value={pending('delivery')}
           hint="Awaiting dispatch" icon={<ArrowUpFromLine size={20} />} onClick={() => navigate(DOC_KINDS.delivery.path)} />
-        <KpiCard label="Scheduled Transfers" tag="Internal" tone="primary" value={pending('transfer')}
+        <KpiCard label="Scheduled Transfers" tone="primary" value={pending('transfer')}
           hint="Open relocations" icon={<ArrowLeftRight size={20} />} onClick={() => navigate(DOC_KINDS.transfer.path)} />
       </div>
 
@@ -205,17 +203,7 @@ export const Dashboard: React.FC = () => {
 
       <PendingQueue docs={queue} catalog={catalog} balances={balances} onChanged={reload} />
 
-      <div className="dash-two-col">
-        <LowStockPanel catalog={catalog} balances={balances} alerts={data.alerts} productIds={productIds} />
-        <MovementSummary
-          entries={data.periodLedger}
-          truncated={data.periodLedgerTruncated}
-          catalog={catalog}
-          warehouseId={warehouseId}
-          period={period}
-          onPeriodChange={setPeriod}
-        />
-      </div>
+      <LowStockPanel catalog={catalog} balances={balances} alerts={data.alerts} productIds={productIds} />
 
       <RecentActivity entries={data.recent} catalog={catalog} />
     </div>

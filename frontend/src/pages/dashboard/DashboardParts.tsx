@@ -2,17 +2,15 @@ import React from 'react';
 
 export const KpiCard: React.FC<{
   label: string;
-  tag: string;
   tone: 'neutral' | 'warning' | 'danger' | 'info' | 'primary';
   value: number;
   hint: string;
   icon: React.ReactNode;
   onClick?: () => void;
-}> = ({ label, tag, tone, value, hint, icon, onClick }) => (
+}> = ({ label, tone, value, hint, icon, onClick }) => (
   <button type="button" className={`dash-kpi tone-${tone}`} onClick={onClick} disabled={!onClick}>
     <div className="dash-kpi-top">
       <span className="dash-kpi-label" title={label}>{label}</span>
-      <span className="dash-tag">{tag}</span>
     </div>
     <div className="dash-kpi-value">
       <span>{value.toLocaleString()}</span>

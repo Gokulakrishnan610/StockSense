@@ -34,9 +34,6 @@ export interface QueueDoc {
   lines: QueueLine[];
 }
 
-export type Period = '24h' | '7d' | '30d';
-const PERIOD_HOURS: Record<Period, number> = { '24h': 24, '7d': 24 * 7, '30d': 24 * 30 };
-
 async function fetchAll<T>(fetchPage: (offset: number, limit: number) => Promise<T[]>, maxPages = 20) {
   const rows: T[] = [];
   for (let page = 0; page < maxPages; page += 1) {
@@ -109,8 +106,6 @@ export interface DashboardData {
   alerts: LowStockAlert[];
   rules: ReorderRule[];
   queue: QueueDoc[];
-  periodLedger: LedgerEntry[];
-  periodLedgerTruncated: boolean;
   recent: LedgerEntry[];
 }
 
@@ -118,12 +113,12 @@ export interface DashboardData {
  * All dashboard numbers come from these backend reads; nothing is estimated in
  * the browser beyond summing the returned balances.
  */
-export function useDashboardData(filters: { warehouseId: string; categoryId: string; period: Period }) {
+export function useDashboardData(filters: { warehouseId: string; categoryId: string }) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
-  const { warehouseId, categoryId, period } = filters;
+  const { warehouseId, categoryId } = filters;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -133,17 +128,11 @@ export function useDashboardData(filters: { warehouseId: string; categoryId: str
         warehouse_id: warehouseId || undefined,
         category_id: categoryId || undefined,
       };
-      const since = new Date(Date.now() - PERIOD_HOURS[period] * 3600 * 1000).toISOString();
-      const maxLedgerPages = 5;
-      const [balances, alerts, rules, queue, periodLedger, recent] = await Promise.all([
+      const [balances, alerts, rules, queue, recent] = await Promise.all([
         fetchAll((offset, limit) => api.getInventoryStock({ offset, limit })),
         fetchAll((offset, limit) => api.getLowStockAlerts(offset, limit)),
         fetchAll((offset, limit) => api.getReorderRules(undefined, offset, limit)),
         loadQueue(),
-        fetchAll(
-          (offset, limit) => api.getLedger({ ...ledgerFilter, date_from: since, offset, limit }),
-          maxLedgerPages
-        ),
         api.getLedger({ ...ledgerFilter, limit: 12 }),
       ]);
       setData({
@@ -151,8 +140,6 @@ export function useDashboardData(filters: { warehouseId: string; categoryId: str
         alerts,
         rules,
         queue,
-        periodLedger,
-        periodLedgerTruncated: periodLedger.length >= maxLedgerPages * 100,
         recent,
       });
       setUpdatedAt(new Date());
@@ -161,7 +148,7 @@ export function useDashboardData(filters: { warehouseId: string; categoryId: str
     } finally {
       setLoading(false);
     }
-  }, [warehouseId, categoryId, period]);
+  }, [warehouseId, categoryId]);
 
   useEffect(() => {
     load();
