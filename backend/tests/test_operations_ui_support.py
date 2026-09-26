@@ -122,6 +122,23 @@ class TestCancellation:
         assert client.post(f"/adjustments/{done}/cancel", headers=manager).status_code == 409
 
 
+def test_operation_summary_counts_by_status(client, manager, catalog):
+    empty = _ok(client.get("/operations/summary", headers=manager))
+    assert set(empty) == {"receipts", "deliveries", "transfers", "adjustments"}
+    assert all(sum(counts.values()) == 0 for counts in empty.values())
+
+    _post(client, "/receipts", {"supplier": "A"}, manager)
+    waiting = _post(client, "/receipts", {"supplier": "B"}, manager)["id"]
+    client.post(f"/receipts/{waiting}/status", json={"status": "WAITING"}, headers=manager)
+    canceled = _post(client, "/deliveries", {"notes": ""}, manager)["id"]
+    client.post(f"/deliveries/{canceled}/cancel", headers=manager)
+
+    summary = _ok(client.get("/operations/summary", headers=manager))
+    assert summary["receipts"] == {"DRAFT": 1, "WAITING": 1, "READY": 0, "DONE": 0, "CANCELED": 0}
+    assert summary["deliveries"]["CANCELED"] == 1
+    assert client.get("/operations/summary").status_code == 401
+
+
 class TestLedgerFilters:
     def test_filters_and_user_name(self, client, manager, catalog):
         product = catalog["product"]["id"]
