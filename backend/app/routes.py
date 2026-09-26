@@ -12,7 +12,7 @@ from app.models import Category, Location, Product, ReorderRule, Warehouse
 from app.services import auth, catalog
 
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
-router = APIRouter(dependencies=[Depends(current_user, scope="function")])
+router = APIRouter(dependencies=[Depends(current_user)])
 Offset = Annotated[int, Query(ge=0)]
 Limit = Annotated[int, Query(ge=1, le=100)]
 
