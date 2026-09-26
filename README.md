@@ -443,8 +443,7 @@ StockSense/
 │   ├── src/pages/                 # Auth, dashboard, catalog and operations UI
 │   ├── src/services/api.ts        # Typed API client
 │   └── vite.config.ts             # Port 3000 and /api development proxy
-├── docs/                          # API reference, requirements and Excalidraw source/export
-└── mockup/                        # Zoomed captures of the Odoo-provided Excalidraw design
+└── docs/                          # API reference, requirements and Excalidraw source/export
 ```
 
 For implementation details, consult [backend routes](backend/app/routes.py), [operation routes](backend/app/op_routes.py), [operation services](backend/app/services/operations.py), and the [frontend API client](frontend/src/services/api.ts). The current code takes precedence over historical integration notes.

@@ -8,8 +8,6 @@ __pycache__/
 *.db
 *.egg-info/
 backend/.postgres/
-mockup/*
-!mockup/*.png
 docs/*
 !docs/*.md
 !docs/StockSense.pdf
