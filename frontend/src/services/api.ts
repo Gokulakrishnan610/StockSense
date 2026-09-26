@@ -62,6 +62,13 @@ class ApiService {
 
     const data = await response.json().catch(() => ({}));
 
+    // An expired or revoked session: return to the login page instead of
+    // leaving every screen showing authentication errors.
+    if (response.status === 401 && token && !endpoint.startsWith('/auth/')) {
+      localStorage.removeItem('stocksense_token');
+      if (window.location.pathname !== '/login') window.location.assign('/login');
+    }
+
     if (!response.ok) {
       const error = new Error(data.message || 'API request failed') as Error & {
         status?: number;
