@@ -34,14 +34,11 @@ def save(db: Session, model, data, entity_id: UUID | None = None):
     if model is Location:
         require(db, Warehouse, values["warehouse_id"])
         if entity_id and entity.warehouse_id != values["warehouse_id"]:
-            if db.scalar(
-                select(StockBalance.product_id)
-                .where(StockBalance.location_id == entity_id)
-                .limit(1)
-            ) or db.scalar(
-                select(StockLedger.id).where(StockLedger.location_id == entity_id).limit(1)
-            ):
-                raise DomainError(409, "LOCATION_IN_USE", "Cannot move a stocked location")
+            # An empty-location check races with opening stock at that location.
+            # Keep warehouse identity stable; moving goods is an inventory operation.
+            raise DomainError(
+                409, "LOCATION_WAREHOUSE_FIXED", "A location's warehouse cannot change"
+            )
     elif model is ReorderRule:
         require(db, Product, values["product_id"])
     for key, value in values.items():

@@ -163,3 +163,71 @@ def test_concurrent_otp_verification_is_single_use(client, account, mailbox):
 @pytest.mark.parametrize("extra", [{"role": "INVENTORY_MANAGER"}, {"token_version": 0}])
 def test_profile_fields_cannot_be_injected(client, account, extra):
     assert client.post("/auth/signup", json={**account, **extra}).status_code == 422
+
+
+def test_smtp_failure_rolls_back_challenge(client, account, engine, monkeypatch):
+    from app.config import get_settings
+    from app.errors import DomainError
+    from app.services import mailer
+
+    monkeypatch.setattr(get_settings(), "smtp_host", "smtp.test")
+
+    def fail(*args):
+        raise DomainError(503, "MAIL_UNAVAILABLE", "Delivery unavailable")
+
+    monkeypatch.setattr(mailer, "send_reset_code", fail)
+    assert client.post("/auth/forgot-password", json={"email": account["email"]}).status_code == 503
+    with Session(engine) as db:
+        assert db.scalar(select(PasswordReset)) is None
+
+
+def test_resend_invalidates_verified_reset_token(client, account, mailbox, engine):
+    email = {"email": account["email"]}
+    client.post("/auth/forgot-password", json=email)
+    token = client.post("/auth/verify-otp", json={**email, "otp": mailbox[0][1]}).json()[
+        "reset_token"
+    ]
+    with Session(engine) as db, db.begin():
+        db.scalar(select(PasswordReset)).issued_at -= 61
+    client.post("/auth/forgot-password", json=email)
+    assert len(mailbox) == 2
+    assert (
+        client.post(
+            "/auth/reset-password",
+            json={"reset_token": token, "new_password": "New safe password!"},
+        ).status_code
+        == 400
+    )
+
+
+def test_concurrent_reset_token_consumption(client, account, mailbox):
+    email = {"email": account["email"]}
+    client.post("/auth/forgot-password", json=email)
+    token = client.post("/auth/verify-otp", json={**email, "otp": mailbox[0][1]}).json()[
+        "reset_token"
+    ]
+    payload = {"reset_token": token, "new_password": "New safe password!"}
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        statuses = list(
+            pool.map(
+                lambda _: client.post("/auth/reset-password", json=payload).status_code, range(2)
+            )
+        )
+    assert sorted(statuses) == [204, 400]
+
+
+def test_password_whitespace_is_preserved(client):
+    payload = {
+        "login_id": "spacesuser",
+        "email": "spaces@example.com",
+        "name": "Space User",
+        "password": " password with spaces ",
+    }
+    assert client.post("/auth/signup", json=payload).status_code == 201
+    for password, status in [(payload["password"], 200), (payload["password"].strip(), 401)]:
+        assert (
+            client.post(
+                "/auth/login", json={"login_id": payload["login_id"], "password": password}
+            ).status_code
+            == status
+        )

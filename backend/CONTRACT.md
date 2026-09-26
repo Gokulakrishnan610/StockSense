@@ -84,8 +84,9 @@ Example product creation:
 
 SKUs and short codes normalize to uppercase. SKU and warehouse code are globally
 unique; location code is unique within its warehouse. Category names are trimmed
-and unique with PostgreSQL's case-sensitive comparison. Stocked/historic locations
-cannot be reassigned to a different warehouse.
+and unique with PostgreSQL's case-sensitive comparison. A location's warehouse
+association is immutable, including empty locations, so a concurrent receipt cannot
+race a warehouse reassignment. Update its name/code or create a new location.
 
 Products support `search` (literal substring of SKU/name), `category_id`,
 `warehouse_id`, and `location_id` filters. Warehouse/location product filters select

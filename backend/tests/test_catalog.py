@@ -174,6 +174,21 @@ def test_reorder_rules(client, manager, catalog):
         )
 
 
+def test_empty_location_cannot_switch_warehouse(client, manager, catalog):
+    location = catalog["locations"][1]
+    response = client.put(
+        f"/locations/{location['id']}",
+        json={
+            "name": location["name"],
+            "short_code": location["short_code"],
+            "warehouse_id": catalog["warehouses"][0]["id"],
+        },
+        headers=manager,
+    )
+    assert response.status_code == 409
+    assert response.json()["code"] == "LOCATION_WAREHOUSE_FIXED"
+
+
 def test_zero_initial_stock_and_invalid_relation(client, manager, catalog, engine):
     payload = {**catalog["product_input"], "sku": "ZERO", "initial_stock": "0"}
     payload.pop("initial_location_id")
