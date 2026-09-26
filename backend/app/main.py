@@ -66,6 +66,12 @@ def create_app() -> FastAPI:
     def health():
         return {"status": "ok"}
 
+    @app.get("/stream", tags=["Events"])
+    async def stream():
+        from fastapi.responses import StreamingResponse
+        from app.services.sse import event_generator
+        return StreamingResponse(event_generator(), media_type="text/event-stream")
+
     app.include_router(auth_router)
     app.include_router(router)
     app.include_router(op_router)
