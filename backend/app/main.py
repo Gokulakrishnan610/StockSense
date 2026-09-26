@@ -19,6 +19,14 @@ def create_app() -> FastAPI:
         allow_headers=["Authorization", "Content-Type"],
     )
 
+    @app.middleware("http")
+    async def prevent_auth_caching(request: Request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith("/auth/"):
+            response.headers["Cache-Control"] = "no-store"
+            response.headers["Pragma"] = "no-cache"
+        return response
+
     @app.exception_handler(DomainError)
     async def domain_error(request: Request, exc: DomainError):
         headers = {"WWW-Authenticate": "Bearer"} if exc.status == 401 else {}

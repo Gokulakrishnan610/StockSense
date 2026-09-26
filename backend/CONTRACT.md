@@ -43,6 +43,8 @@ JWTs use HS256 with issuer/audience checks and a 30-minute default expiry. Token
 carry the user's token version, checked against the database on every request.
 Logout and password reset increment this version to invalidate all sessions.
 The frontend must navigate to the returned `/dashboard` route; no frontend exists here.
+All `/auth/` responses, including errors, send `Cache-Control: no-store` and
+`Pragma: no-cache` so tokens and profile responses are not retained by HTTP caches.
 
 Reset codes expire after 10 minutes, permit five attempts, and have a 60-second
 resend cooldown. A successful verification consumes the code and creates an opaque,
