@@ -133,7 +133,7 @@ The current delivery `WAITING` status means Pick has completed. It does not auto
 
 ```mermaid
 flowchart LR
-    Count[Choose product and location; enter physical count and reason] --> Draft[DRAFT]
+    Count[Choose product and location, enter physical count and reason] --> Draft[DRAFT]
     Draft -->|Validate| Difference[Delta = counted minus current recorded quantity]
     Difference --> Changed{Delta is nonzero?}
     Changed -->|Yes| Ledger[Update balance and append ledger entry]
@@ -189,14 +189,14 @@ sequenceDiagram
     UI->>API: POST /receipts/{id}/validate (example)
     API->>API: Check JWT and input
     API->>Service: Validate document
-    Service->>DB: Lock document; verify state and lines
+    Service->>DB: Lock document, verify state and lines
     Service->>DB: Lock products in ascending UUID order
     Service->>DB: Apply deltas and insert ledger rows
     Service->>DB: Set DONE and flush
     Service->>Side: Counter, stock event and applicable low-stock alerts
     Note over Service,Side: Current side effects run before DB commit
     Service-->>API: Operation result
-    API->>DB: Session dependency commits; rolls back on error
+    API->>DB: Session dependency commits, rolls back on error
     API-->>UI: Operation response
     UI->>API: Reload document and stock details
 ```
