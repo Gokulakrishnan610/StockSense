@@ -30,3 +30,18 @@ If you are developing a production application, we recommend enabling type-aware
 ```
 
 See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+
+## Wireframe styling and icons
+
+The app uses the supplied `wireframe.png` as a visual reference: white surfaces,
+compact bordered forms and tables, a flat sidebar, and a shared authentication shell.
+Only implemented routes are shown; illustration-only reports/supplier screens are
+not added as inactive navigation links.
+
+Import icons from `src/components/ui/icons.tsx`. This shared Lucide React adapter
+sets `strokeWidth={1.5}`, inherits parent text color, and restricts sizes to
+12 (xs), 14 (sm), 16 (default), 20 (md), and 24 (lg). Apply semantic color to the
+parent element. Do not add emoji icons or another icon library.
+
+Run the backend on port 8000, then run `npm ci` and `npm run dev` here.
+Open http://127.0.0.1:3000. Vite forwards `/api` requests to the backend.

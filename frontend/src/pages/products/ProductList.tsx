@@ -1,5 +1,6 @@
+import { useSearchParams } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Eye, Edit3 } from 'lucide-react';
+import { Plus, Eye, Edit3 } from '../../components/ui/icons';
 import { api } from '../../services/api';
 import type { Product, Category, Warehouse, Location } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -18,7 +19,9 @@ export const ProductList: React.FC = () => {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
 
-  const [search, setSearch] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get('search') || '';
+  const setSearch = (value: string) => setSearchParams(value ? { search: value } : {});
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState('');
   const [selectedLocation, setSelectedLocation] = useState('');
@@ -162,7 +165,7 @@ export const ProductList: React.FC = () => {
             className="btn btn-primary"
             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <Plus size={18} /> Add Product
+            <Plus size={16} /> Add Product
           </button>
         )}
       </div>
