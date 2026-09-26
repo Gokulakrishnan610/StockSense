@@ -7,6 +7,90 @@
 
 [GitHub repository](https://github.com/Gokulakrishnan610/StockSense/) · [Problem statement](docs/StockSense.pdf) · [Excalidraw board](https://app.excalidraw.com/l/65VNwvy7c4X/3ENvQFu9o8R) · [API reference](docs/API.md)
 
+---
+
+## 💡 Architectural Rationale & Technical Justifications
+
+Every technology in StockSense was chosen deliberately — optimizing for **production correctness**, **operational safety**, and **long-term maintainability** over raw micro-benchmark numbers or novelty.
+
+---
+
+### 1. Why Python + FastAPI instead of JavaScript runtimes (Bun/Hono)?
+
+**Mature Async I/O with Battle-Tested Tooling:**
+FastAPI is built on Starlette and Uvicorn, which use Python's native `asyncio` event loop — the same foundation trusted by Discord, NASA, and thousands of production SaaS systems globally. Throughput claims about newer JavaScript runtimes often reflect synthetic HTTP-ping benchmarks, not the mixed I/O, ORM, and database-bound workloads that dominate inventory management systems.
+
+**Python's Numeric Precision is Non-Negotiable for Inventory:**
+StockSense uses Python's native `Decimal` type end-to-end (database `NUMERIC(18,4)` ↔ Pydantic `Decimal` ↔ JSON strings), guaranteeing exact arithmetic for stock balances, ledger deltas, and adjustments. JavaScript/TypeScript uses IEEE 754 floating-point by default; without careful per-field handling, float arithmetic silently corrupts quantities at scale.
+
+**Pydantic V2 > Runtime Type Checking in JS Runtimes:**
+FastAPI's Pydantic V2 models (compiled via Rust) provide schema validation, serialization, OpenAPI generation, and self-documenting Swagger UI (`/docs`, `/redoc`) from a single source of truth. TypeScript's compile-time types vanish at runtime — any runtime schema mismatch produces silent `undefined` bugs rather than a validated 422 error with a structured payload.
+
+**Ecosystem Depth:**
+Python's ecosystem for data science, reporting, ML integration, and async task processing (Celery, SQLAlchemy, Alembic) has 30+ years of production hardening. Bun and Hono are < 3 years old; running them in production for financial inventory mutations introduces unnecessary early-adopter risk.
+
+---
+
+### 2. Why SQLAlchemy + Alembic instead of newer ORMs (Drizzle)?
+
+**Schema Migrations are a First-Class Concern:**
+Alembic provides version-controlled, reviewable, and reversible migration scripts. StockSense's Alembic migrations include PostgreSQL-level DDL triggers that immutably protect the audit ledger — something a lightweight ORM cannot easily express. Schema evolution in production inventory systems is not optional; it must be traceable and rollback-safe.
+
+**Declarative Models + Full ORM Power:**
+SQLAlchemy's declarative models give full Python-side control: `relationship()` loading strategies, event hooks (`@event.listens_for`), column-level encryption, and custom types. For a domain as relationship-heavy as inventory (products ↔ locations ↔ balances ↔ ledger ↔ operations ↔ items), the expressive power of a full ORM eliminates entire categories of join-assembly bugs.
+
+**Row-Level Locking with Explicit Session Semantics:**
+StockSense explicitly uses `SELECT ... FOR UPDATE` via SQLAlchemy `with_for_update()` on product rows, sorted by UUID to prevent deadlocks across concurrent validations. The transaction boundary is the FastAPI dependency-injected `Session`, which commits on response success and rolls back on any exception — a deterministic, auditable guarantee.
+
+**Reliability Over Query-Builder Minimalism:**
+Lightweight query-builder ORMs optimize for "clean SQL output" as a selling point. But correctness, not aesthetics, is the priority when a ledger entry represents a physical goods movement. SQLAlchemy's session-level identity map, flush semantics, and lazy/eager load controls prevent subtle phantom-read issues that a thin query builder leaves entirely to the developer.
+
+---
+
+### 3. Why Server-Sent Events (SSE) instead of WebSockets?
+
+**Right Tool for a Unidirectional Data Stream:**
+StockSense notifications are inherently **server-to-client**: stock update alerts, low-stock warnings, and operation confirmations flow from the backend to browsers. SSE (`text/event-stream`) is the HTTP-native, RFC-standardized protocol for exactly this use case — with automatic browser reconnection, standard HTTP/2 multiplexing, and zero handshake overhead.
+
+**No Protocol Upgrade Complexity:**
+WebSockets require an HTTP→WS protocol upgrade (`Upgrade: websocket`), a separate connection lifecycle, custom heartbeat/ping-pong management, and bespoke auth handshake logic — all of which must be built and maintained from scratch. SSE rides on standard HTTP with `Authorization` headers, CDN caching, and reverse-proxy support out of the box.
+
+**Lightweight and Load-Balancer Friendly:**
+SSE connections are plain long-lived HTTP responses. They pass transparently through every HTTP/1.1 and HTTP/2 proxy, load balancer, and CDN without special configuration. WebSocket connections require sticky sessions or a shared pub/sub broker (Redis, etc.) to function correctly behind a load balancer — adding infrastructure complexity that a 8-hour hackathon system cannot reliably validate.
+
+**Bi-Directional Communication is Overkill for Inventory Notifications:**
+Inventory dashboards are read-heavy. Mutations happen via standard REST `POST`/`PATCH` endpoints — which already use HTTP with full request validation, error codes, and OpenAPI documentation. Forcing those mutations through a WebSocket message bus adds a second, parallel, schema-less communication channel that duplicates the REST layer without adding value.
+
+**Browser Native, Zero Client Library Required:**
+The `EventSource` API is built into every modern browser. No client-side WebSocket library, connection management wrapper, or reconnect logic needs to be bundled — reducing frontend bundle size and eliminating a class of client-side bugs.
+
+---
+
+### 4. Why Celery + Redis for Background Tasks instead of in-process async workers?
+
+**Process Isolation for Email Delivery:**
+SMTP operations are slow, failure-prone (network timeouts, relay rejections), and should never block an HTTP request-response cycle. StockSense offloads all email tasks — OTP delivery, password reset notifications — to a Celery worker process, ensuring that an SMTP outage never delays a stock validation response.
+
+**Durable Task Queue with Retry Semantics:**
+Redis-backed Celery tasks survive API server restarts. If the worker is temporarily unavailable, tasks queue in Redis and are processed when the worker recovers. An in-process `asyncio.create_task()` approach loses all queued work on server crash — unacceptable for transactional email in a production inventory system.
+
+**Operational Observability:**
+Celery provides first-class task state tracking (`PENDING`, `STARTED`, `SUCCESS`, `FAILURE`), retry policies, dead-letter queuing, and integrates with monitoring tools (Flower, Prometheus exporters). This is production-grade background job infrastructure, not a prototype.
+
+---
+
+### 5. Why PostgreSQL Triggers for Ledger Immutability?
+
+**Database-Level Enforcement, Not Application-Level Hope:**
+StockSense's Alembic migrations install PostgreSQL DDL triggers (`BEFORE UPDATE`, `BEFORE DELETE`, `BEFORE TRUNCATE`) directly on `stock_ledger`. No application code, ORM quirk, or future developer can accidentally mutate or delete an audit entry — the database physically rejects it. Application-layer immutability checks are bypassable by raw SQL clients, migration scripts, or bugs; database triggers are not.
+
+---
+
+> **Design Philosophy:** StockSense chooses proven, composable primitives — Python, FastAPI, SQLAlchemy, SSE, Celery — that have individually earned trust in large-scale production systems. Combining niche or newly-emerged runtimes with query builders and WebSocket pub/sub buses may produce impressive benchmark numbers; it does not produce auditable, maintainable inventory infrastructure.
+
+---
+
+
 ## Contents
 
 - [Documentation](#documentation)
