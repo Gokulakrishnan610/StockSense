@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { ArrowRight, Plus, Trash2 } from '../../components/ui/icons';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, CheckCircle2, Plus, Trash2 } from '../../components/ui/icons';
 import { Select, type SelectItem } from '../../components/ui/Select';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { LoadingState } from '../../components/ui/LoadingState';
@@ -19,15 +19,14 @@ import {
   type Catalog,
 } from './operationUtils';
 import { advanceToReady, lineApi, type LineDocKind } from './operationWorkflow';
+import './operations.css';
 
 interface Line {
   key: string;
   /** Backend line id for lines that already exist. */
   id?: string;
   product_id: string;
-  source_warehouse_id: string;
   location_id: string;
-  destination_warehouse_id: string;
   destination_location_id: string;
   quantity: string;
 }
@@ -36,14 +35,13 @@ type LineSnapshot = Pick<Line, 'product_id' | 'location_id' | 'destination_locat
 
 const newKey = () => Math.random().toString(36).slice(2, 10);
 
-const emptyLine = (): Line => ({
+const emptyLine = (defaults: Partial<Line> = {}): Line => ({
   key: newKey(),
   product_id: '',
-  source_warehouse_id: '',
   location_id: '',
-  destination_warehouse_id: '',
   destination_location_id: '',
   quantity: '',
+  ...defaults,
 });
 
 const sameLine = (a: LineSnapshot, b: LineSnapshot) =>
@@ -52,78 +50,40 @@ const sameLine = (a: LineSnapshot, b: LineSnapshot) =>
   a.destination_location_id === b.destination_location_id &&
   Number(a.quantity) === Number(b.quantity);
 
-const COPY: Record<LineDocKind, { subtitle: string; locationLabel: string; validateLabel: string }> = {
+const COPY: Record<
+  LineDocKind,
+  { title: string; subtitle: string; section1: string; validateLabel: string; footerHint: string }
+> = {
   receipt: {
-    subtitle: 'Record incoming goods from a supplier into a stock location',
-    locationLabel: 'Destination Location',
-    validateLabel: 'Validate Receipt',
+    title: 'Receipt',
+    subtitle: 'Record goods arriving from a supplier into a stock location.',
+    section1: 'Supplier & destination',
+    validateLabel: 'Validate & Receive',
+    footerHint: 'Validating adds the quantities to stock and records them in the ledger.',
   },
   delivery: {
-    subtitle: 'Ship goods out of a stock location (Pick → Pack → Validate)',
-    locationLabel: 'Source Location',
-    validateLabel: 'Validate Delivery',
+    title: 'Delivery Order',
+    subtitle: 'Ship goods out of a stock location: Pick → Pack → Validate.',
+    section1: 'Source & dispatch details',
+    validateLabel: 'Validate & Ship',
+    footerHint: 'Validating removes the quantities from stock; it fails if stock is insufficient.',
   },
   transfer: {
-    subtitle: 'Move stock between warehouses or locations; global stock stays the same',
-    locationLabel: 'From',
-    validateLabel: 'Validate Transfer',
+    title: 'Internal Transfer',
+    subtitle: 'Move stock between warehouses or locations. Global stock stays the same.',
+    section1: 'Route',
+    validateLabel: 'Validate & Move',
+    footerHint: 'Validating decreases each source and increases each destination by the same amount.',
   },
 };
 
-const LocationSelect: React.FC<{
-  catalog: Catalog;
-  value: string;
-  onChange: (value: string) => void;
-  warehouseId?: string;
-  disabled?: boolean;
-  ariaLabel: string;
-}> = ({ catalog, value, onChange, warehouseId, disabled, ariaLabel }) => {
-  const warehouses = warehouseId
-    ? catalog.warehouses.filter((w) => w.id === warehouseId)
-    : catalog.warehouses;
-
-  const items: SelectItem[] = warehouseId
-    ? catalog.locations
-        .filter((l) => l.warehouse_id === warehouseId)
-        .map((l) => ({ value: l.id, label: `${l.name} (${l.short_code})` }))
-    : warehouses.map((w) => ({
-        label: `${w.name} (${w.short_code})`,
-        options: catalog.locations
-          .filter((l) => l.warehouse_id === w.id)
-          .map((l) => ({ value: l.id, label: `${l.name} (${l.short_code})` })),
-      }));
-
-  return (
-    <Select
-      value={value}
-      onChange={onChange}
-      options={items}
-      placeholder="Select location"
-      disabled={disabled}
-      aria-label={ariaLabel}
-    />
-  );
-};
-
-const WarehouseSelect: React.FC<{
-  catalog: Catalog;
-  value: string;
-  onChange: (value: string) => void;
-  disabled?: boolean;
-  ariaLabel: string;
-}> = ({ catalog, value, onChange, disabled, ariaLabel }) => (
-  <Select
-    value={value}
-    onChange={onChange}
-    options={[
-      { value: '', label: 'Any warehouse' },
-      ...catalog.warehouses.map((w) => ({ value: w.id, label: `${w.name} (${w.short_code})` })),
-    ]}
-    placeholder="Any warehouse"
-    disabled={disabled}
-    aria-label={ariaLabel}
-  />
-);
+const locationItems = (catalog: Catalog): SelectItem[] =>
+  catalog.warehouses.map((w) => ({
+    label: `${w.name} (${w.short_code})`,
+    options: catalog.locations
+      .filter((l) => l.warehouse_id === w.id)
+      .map((l) => ({ value: l.id, label: `${w.short_code} / ${l.name}` })),
+  }));
 
 export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
   const { id } = useParams<{ id: string }>();
@@ -138,13 +98,15 @@ export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
 
   const [supplier, setSupplier] = useState('');
   const [notes, setNotes] = useState('');
+  // Header-level defaults applied to lines that have no location yet.
+  const [defaultFrom, setDefaultFrom] = useState('');
+  const [defaultTo, setDefaultTo] = useState('');
   // New documents can be pre-filled from links, e.g. ?product=<id>&quantity=50.
   const [lines, setLines] = useState<Line[]>(() => [
-    {
-      ...emptyLine(),
+    emptyLine({
       product_id: id ? '' : searchParams.get('product') ?? '',
       quantity: id ? '' : searchParams.get('quantity') ?? '',
-    },
+    }),
   ]);
   const [originalLines, setOriginalLines] = useState<Map<string, LineSnapshot>>(new Map());
   const [status, setStatus] = useState<OperationStatusCode>('DRAFT');
@@ -154,6 +116,9 @@ export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
   const [submitting, setSubmitting] = useState<'save' | 'validate' | null>(null);
 
   const usesSourceStock = kind !== 'receipt';
+  // Receipts only have a destination; deliveries only a source; transfers both.
+  const hasFrom = kind !== 'receipt';
+  const hasTo = kind !== 'delivery';
 
   useEffect(() => {
     if (!id) return;
@@ -166,7 +131,7 @@ export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
         setNotes(doc.notes);
         setStatus(doc.status);
         const loaded: Line[] = items.map((item) => ({
-          ...emptyLine(),
+          key: newKey(),
           id: item.id,
           product_id: item.product_id,
           location_id: item.location_id,
@@ -190,6 +155,41 @@ export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
   const updateLine = (key: string, patch: Partial<Line>) =>
     setLines((prev) => prev.map((line) => (line.key === key ? { ...line, ...patch } : line)));
 
+  /**
+   * Receipt lines store their destination in `location_id`; delivery and
+   * transfer lines store their source there (transfers add a destination).
+   */
+  const fromOf = (line: Line) => (hasFrom ? line.location_id : '');
+  const toOf = (line: Line) => (kind === 'receipt' ? line.location_id : line.destination_location_id);
+  const setFrom = (line: Line, value: string) => updateLine(line.key, { location_id: value });
+  const setTo = (line: Line, value: string) =>
+    updateLine(line.key, kind === 'receipt' ? { location_id: value } : { destination_location_id: value });
+
+  const applyDefault = (which: 'from' | 'to', value: string) => {
+    if (which === 'from') setDefaultFrom(value);
+    else setDefaultTo(value);
+    setLines((prev) =>
+      prev.map((line) => {
+        if (which === 'from' && !line.location_id) return { ...line, location_id: value };
+        if (which === 'to') {
+          if (kind === 'receipt' && !line.location_id) return { ...line, location_id: value };
+          if (kind === 'transfer' && !line.destination_location_id) return { ...line, destination_location_id: value };
+        }
+        return line;
+      })
+    );
+  };
+
+  const addLine = () =>
+    setLines((prev) => [
+      ...prev,
+      emptyLine(
+        kind === 'receipt'
+          ? { location_id: defaultTo }
+          : { location_id: defaultFrom, destination_location_id: kind === 'transfer' ? defaultTo : '' }
+      ),
+    ]);
+
   // Total requested per product/source location, so split lines are checked together.
   const requested = useMemo(() => {
     const totals = new Map<string, number>();
@@ -206,19 +206,18 @@ export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
     const available = availableAt(line.product_id, line.location_id);
     const total = requested.get(`${line.product_id}|${line.location_id}`) ?? 0;
     if (available === undefined || total <= available) return null;
-    return `Only ${formatQty(available, catalog.unitOf(line.product_id))} available at this location`;
+    return `Only ${formatQty(available, catalog.unitOf(line.product_id))} available at the source`;
   };
 
   const validateForm = (forValidation: boolean): string | null => {
     if (kind === 'receipt' && !supplier.trim()) return 'Supplier is required.';
-    const filled = lines.filter(
-      (l) => l.product_id || l.location_id || l.destination_location_id || l.quantity
-    );
-    if (!filled.length) return 'Add at least one item.';
+    const filled = lines.filter((l) => l.product_id || l.quantity);
+    if (!filled.length) return 'Add at least one product line.';
     for (const [index, line] of filled.entries()) {
-      const n = `Item ${index + 1}`;
+      const n = `Line ${index + 1}`;
       if (!line.product_id) return `${n}: select a product.`;
-      if (!line.location_id) return `${n}: select ${kind === 'transfer' ? 'a source' : 'a'} location.`;
+      if (hasFrom && !line.location_id) return `${n}: select a source location.`;
+      if (kind === 'receipt' && !line.location_id) return `${n}: select a destination location.`;
       if (kind === 'transfer') {
         if (!line.destination_location_id) return `${n}: select a destination location.`;
         if (line.destination_location_id === line.location_id)
@@ -316,21 +315,33 @@ export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
 
   const busy = submitting !== null;
   const noCatalog = !catalog.products.length || !catalog.locations.length;
+  const backTo = id ? `${meta.path}/${id}` : meta.path;
+  const locations = locationItems(catalog);
+  const productItems = catalog.products.map((p) => ({ value: p.id, label: `${p.sku} — ${p.name}` }));
+
+  const filledLines = lines.filter((l) => l.product_id && !quantityError(l.quantity));
+  const units = new Set(filledLines.map((l) => catalog.unitOf(l.product_id)));
+  const totalQty = filledLines.reduce((sum, l) => sum + Number(l.quantity), 0);
+  const gridClass = `line-grid ${hasFrom && hasTo ? 'has-both' : ''}`;
 
   return (
-    <div>
-      <BackLink to={id ? `${meta.path}/${id}` : meta.path} label={id ? 'Back to details' : `Back to ${meta.plural}`} />
-      <div className="page-header">
-        <div>
-          <h2 className="page-title">
-            {isEdit ? `Edit ${meta.label}` : `Create ${meta.label}`}
+    <div className="op-form-page">
+      <div className="op-page-header">
+        <button className="icon-button" onClick={() => navigate(backTo)} aria-label="Back">
+          <ArrowLeft size={20} />
+        </button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h2 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+            {isEdit ? `Edit ${copy.title}` : `Create ${copy.title}`}
+            {isEdit && <span className="code-chip">{docRef(kind, id as string)}</span>}
+            {isEdit && <OperationStatusBadge status={status} />}
           </h2>
           <p className="page-subtitle">{copy.subtitle}</p>
         </div>
-        {isEdit && <OperationStatusBadge status={status} />}
+        <Link to={backTo} className="panel-link">Cancel</Link>
       </div>
 
-      <div className="card">
+      <div className="card op-form">
         {formError && <InlineAlert>{formError}</InlineAlert>}
         {noCatalog && (
           <InlineAlert>
@@ -338,16 +349,11 @@ export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
           </InlineAlert>
         )}
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-            gap: '16px',
-          }}
-        >
+        <h3 className="form-section-title">1. {copy.section1}</h3>
+        <div className="form-row">
           {kind === 'receipt' && (
             <div className="form-group">
-              <label className="form-label" htmlFor="supplier">Supplier *</label>
+              <label className="form-label" htmlFor="supplier">Supplier / Vendor *</label>
               <input
                 id="supplier"
                 className="form-input"
@@ -359,245 +365,141 @@ export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
               />
             </div>
           )}
+          {hasFrom && (
+            <div className="form-group">
+              <label className="form-label">{kind === 'transfer' ? 'Default From' : 'Default Source Location'}</label>
+              <Select value={defaultFrom} onChange={(v) => applyDefault('from', v)} options={locations}
+                placeholder="Select location" disabled={busy} aria-label="Default source location" />
+              <span className="form-hint">Applied to lines without a source</span>
+            </div>
+          )}
+          {hasTo && (
+            <div className="form-group">
+              <label className="form-label">{kind === 'transfer' ? 'Default To' : 'Default Destination Location'}</label>
+              <Select value={defaultTo} onChange={(v) => applyDefault('to', v)} options={locations}
+                placeholder="Select location" disabled={busy} aria-label="Default destination location" />
+              <span className="form-hint">Applied to lines without a destination</span>
+            </div>
+          )}
           <div className="form-group">
-            <label className="form-label">Reference No</label>
-            <input
-              className="form-input"
-              value={id ? docRef(kind, id) : 'Assigned on save'}
-              readOnly
-              disabled
-            />
+            <label className="form-label">Reference</label>
+            <input className="form-input mono-input" value={id ? docRef(kind, id) : 'Assigned on save'} readOnly disabled />
           </div>
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            margin: '8px 0 12px',
-          }}
-        >
-          <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>Items</h3>
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            onClick={() => setLines((prev) => [...prev, emptyLine()])}
-            disabled={busy}
-          >
-            <Plus size={14} /> Add Item
+        <div className="form-section-head">
+          <h3 className="form-section-title" style={{ margin: 0, border: 0, padding: 0 }}>
+            2. Product lines & quantities ({lines.length})
+          </h3>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={addLine} disabled={busy}>
+            <Plus size={14} /> Add Product Line
           </button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div className="line-table">
+          <div className={`${gridClass} line-head`} aria-hidden="true">
+            <span>Product</span>
+            {hasFrom && <span>From</span>}
+            {hasTo && <span>To</span>}
+            <span className="num">Quantity</span>
+            <span />
+          </div>
           {lines.map((line, index) => {
-            const available = usesSourceStock
-              ? availableAt(line.product_id, line.location_id)
-              : undefined;
             const unit = catalog.unitOf(line.product_id);
+            const available = usesSourceStock ? availableAt(line.product_id, line.location_id) : undefined;
             const warning = shortage(line);
-            // A selected location implies its warehouse, e.g. for lines loaded for editing.
-            const sourceWarehouse =
-              line.source_warehouse_id ||
-              catalog.locationById.get(line.location_id)?.warehouse_id ||
-              '';
-            const destinationWarehouse =
-              line.destination_warehouse_id ||
-              catalog.locationById.get(line.destination_location_id)?.warehouse_id ||
-              '';
+            const qtyProblem = line.quantity ? quantityError(line.quantity) : null;
+            const showRoute = kind === 'transfer' && line.location_id && line.destination_location_id;
             return (
-              <div
-                key={line.key}
-                style={{
-                  border: '1px solid var(--border-color)',
-                  borderRadius: '10px',
-                  padding: '14px',
-                  backgroundColor: 'var(--surface-input)',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-                    gap: '12px',
-                    alignItems: 'end',
-                  }}
-                >
-                  <div>
-                    <label className="form-label">#{index + 1} Product *</label>
-                    <Select
-                      value={line.product_id}
-                      onChange={(v) => updateLine(line.key, { product_id: v })}
-                      options={catalog.products.map((p) => ({ value: p.id, label: `${p.name} (${p.sku})` }))}
-                      placeholder="Select product"
-                      disabled={busy}
-                      aria-label={`Item ${index + 1} product`}
-                    />
-                  </div>
-
-                  {kind === 'transfer' && (
-                    <div>
-                      <label className="form-label">Source Warehouse</label>
-                      <WarehouseSelect
-                        catalog={catalog}
-                        value={sourceWarehouse}
-                        onChange={(value) =>
-                          updateLine(line.key, { source_warehouse_id: value, location_id: '' })
-                        }
-                        disabled={busy}
-                        ariaLabel={`Item ${index + 1} source warehouse`}
-                      />
-                    </div>
+              <div key={line.key} className="line-row">
+                <div className={gridClass}>
+                  <Select value={line.product_id} onChange={(v) => updateLine(line.key, { product_id: v })}
+                    options={productItems} placeholder="Select product" disabled={busy}
+                    aria-label={`Line ${index + 1} product`} />
+                  {hasFrom && (
+                    <Select value={fromOf(line)} onChange={(v) => setFrom(line, v)} options={locations}
+                      placeholder="From location" disabled={busy} aria-label={`Line ${index + 1} source location`} />
                   )}
-                  <div>
-                    <label className="form-label">
-                      {kind === 'transfer' ? 'Source Location' : copy.locationLabel} *
-                    </label>
-                    <LocationSelect
-                      catalog={catalog}
-                      value={line.location_id}
-                      warehouseId={kind === 'transfer' ? sourceWarehouse : undefined}
-                      onChange={(value) => updateLine(line.key, { location_id: value })}
-                      disabled={busy}
-                      ariaLabel={`Item ${index + 1} ${kind === 'transfer' ? 'source location' : 'location'}`}
-                    />
-                  </div>
-
-                  {kind === 'transfer' && (
-                    <>
-                      <div>
-                        <label className="form-label">Destination Warehouse</label>
-                        <WarehouseSelect
-                          catalog={catalog}
-                          value={destinationWarehouse}
-                          onChange={(value) =>
-                            updateLine(line.key, {
-                              destination_warehouse_id: value,
-                              destination_location_id: '',
-                            })
-                          }
-                          disabled={busy}
-                          ariaLabel={`Item ${index + 1} destination warehouse`}
-                        />
-                      </div>
-                      <div>
-                        <label className="form-label">Destination Location *</label>
-                        <LocationSelect
-                          catalog={catalog}
-                          value={line.destination_location_id}
-                          warehouseId={destinationWarehouse}
-                          onChange={(value) =>
-                            updateLine(line.key, { destination_location_id: value })
-                          }
-                          disabled={busy}
-                          ariaLabel={`Item ${index + 1} destination location`}
-                        />
-                      </div>
-                    </>
+                  {hasTo && (
+                    <Select value={toOf(line)} onChange={(v) => setTo(line, v)} options={locations}
+                      placeholder="To location" disabled={busy} aria-label={`Line ${index + 1} destination location`} />
                   )}
-
-                  <div>
-                    <label className="form-label">Quantity {unit && `(${unit})`} *</label>
+                  <div className="qty-cell">
                     <input
-                      className="form-input"
+                      className={`form-input qty-input ${qtyProblem ? 'has-error' : ''}`}
                       inputMode="decimal"
                       value={line.quantity}
                       placeholder="0"
                       onChange={(e) => updateLine(line.key, { quantity: e.target.value })}
                       disabled={busy}
-                      aria-label={`Item ${index + 1} quantity`}
+                      aria-label={`Line ${index + 1} quantity`}
                     />
+                    <span className="qty-unit">{unit || '—'}</span>
                   </div>
-
-                  <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-sm"
-                      onClick={() =>
-                        setLines((prev) =>
-                          prev.length > 1 ? prev.filter((l) => l.key !== line.key) : [emptyLine()]
-                        )
-                      }
-                      disabled={busy}
-                      title="Remove item"
-                      aria-label={`Remove item ${index + 1}`}
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                  <button
+                    type="button"
+                    className="icon-button line-remove"
+                    onClick={() => setLines((prev) => (prev.length > 1 ? prev.filter((l) => l.key !== line.key) : [emptyLine()]))}
+                    disabled={busy}
+                    aria-label={`Remove line ${index + 1}`}
+                    title="Remove line"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                {(available !== undefined || warning || qtyProblem || showRoute) && (
+                  <div className="line-notes">
+                    {showRoute && (
+                      <span className="route">
+                        {catalog.locationLabel(line.location_id)} <ArrowRight size={12} />{' '}
+                        {catalog.locationLabel(line.destination_location_id)}
+                      </span>
+                    )}
+                    {available !== undefined && (
+                      <span>Available at source: <strong>{formatQty(available, unit)}</strong></span>
+                    )}
+                    {qtyProblem && <span className="text-danger">{qtyProblem}</span>}
+                    {warning && <span className="text-warning">{warning}</span>}
                   </div>
-                </div>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '16px',
-                    flexWrap: 'wrap',
-                    marginTop: '10px',
-                    fontSize: '0.8125rem',
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  {kind === 'transfer' && line.location_id && line.destination_location_id && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      From <strong>{catalog.locationLabel(line.location_id)}</strong>
-                      <ArrowRight size={12} />
-                      To <strong>{catalog.locationLabel(line.destination_location_id)}</strong>
-                    </span>
-                  )}
-                  {available !== undefined && (
-                    <span>
-                      Available at source: <strong>{formatQty(available, unit)}</strong>
-                    </span>
-                  )}
-                  {line.quantity && quantityError(line.quantity) && (
-                    <span style={{ color: 'var(--color-danger)' }}>{quantityError(line.quantity)}</span>
-                  )}
-                  {warning && <span style={{ color: 'var(--color-warning)' }}>{warning}</span>}
-                </div>
+                )}
               </div>
             );
           })}
         </div>
+        <div className="line-totals">
+          <span className="mono">{filledLines.length} line{filledLines.length === 1 ? '' : 's'} total</span>
+          <span className="mono">
+            Total: <strong>{units.size > 1 ? 'mixed units' : formatQty(totalQty, [...units][0])}</strong>
+          </span>
+        </div>
 
-        <div className="form-group" style={{ marginTop: '16px' }}>
-          <label className="form-label" htmlFor="notes">Notes</label>
+        <h3 className="form-section-title">3. Notes</h3>
+        <div className="form-group">
+          <label className="form-label" htmlFor="notes">
+            {kind === 'receipt' ? 'Receiving notes & instructions' : kind === 'delivery' ? 'Customer / dispatch notes' : 'Transfer notes'}
+          </label>
           <textarea
             id="notes"
             className="form-input"
             rows={3}
             maxLength={1000}
-            placeholder="Enter notes (optional)"
+            placeholder={kind === 'delivery' ? 'Customer name, order number, carrier…' : 'Inspection checklist, dock number, carrier…'}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             disabled={busy}
           />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => navigate(id ? `${meta.path}/${id}` : meta.path)}
-            disabled={busy}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={() => handleSubmit('save')}
-            disabled={busy || noCatalog}
-          >
-            {submitting === 'save' ? 'Saving...' : isEdit ? 'Save Changes' : 'Save as Draft'}
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => handleSubmit('validate')}
-            disabled={busy || noCatalog}
-          >
-            {submitting === 'validate' ? 'Validating...' : copy.validateLabel}
-          </button>
+        <div className="op-form-footer">
+          <span className="form-hint">{copy.footerHint}</span>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn-secondary" onClick={() => handleSubmit('save')} disabled={busy || noCatalog}>
+              {submitting === 'save' ? 'Saving...' : isEdit ? 'Save Changes' : 'Save Draft'}
+            </button>
+            <button type="button" className="btn btn-primary" onClick={() => handleSubmit('validate')} disabled={busy || noCatalog}>
+              <CheckCircle2 size={16} /> {submitting === 'validate' ? 'Validating...' : copy.validateLabel}
+            </button>
+          </div>
         </div>
       </div>
     </div>
