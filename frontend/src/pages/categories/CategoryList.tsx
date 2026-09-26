@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Edit3, Trash2, FolderTree, AlertCircle } from 'lucide-react';
+import { Plus, Edit3, Trash2, FolderTree, AlertCircle } from '../../components/ui/icons';
 import { api } from '../../services/api';
 import type { Category } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -164,7 +164,7 @@ export const CategoryList: React.FC = () => {
             className="btn btn-primary"
             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <Plus size={18} /> Add Category
+            <Plus size={16} /> Add Category
           </button>
         )}
       </div>

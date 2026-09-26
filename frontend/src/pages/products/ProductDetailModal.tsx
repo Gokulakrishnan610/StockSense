@@ -3,7 +3,7 @@ import { Modal } from '../../components/ui/Modal';
 import type { Product, ProductStock, Location, Warehouse } from '../../types';
 import { api } from '../../services/api';
 import { LoadingState } from '../../components/ui/LoadingState';
-import { MapPin, Warehouse as WarehouseIcon, Package } from 'lucide-react';
+import { MapPin, Warehouse as WarehouseIcon, Package } from '../../components/ui/icons';
 import { ProductMovements } from '../operations/ProductMovements';
 
 interface ProductDetailModalProps {
@@ -120,7 +120,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 fontSize: '0.875rem',
               }}
             >
-              <Package size={32} style={{ marginBottom: '8px', opacity: 0.5 }} />
+              <Package size={24} style={{ marginBottom: '8px', opacity: 0.5 }} />
               <div>No stock balance records found for this product across locations.</div>
             </div>
           ) : (

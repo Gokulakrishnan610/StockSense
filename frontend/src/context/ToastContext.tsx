@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
+import { CheckCircle2, AlertTriangle, Info, X } from '../components/ui/icons';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -70,9 +70,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }}
           >
             <div style={{ marginTop: '2px' }}>
-              {toast.type === 'success' && <CheckCircle2 size={18} color="var(--color-success)" />}
-              {toast.type === 'error' && <AlertTriangle size={18} color="var(--color-danger)" />}
-              {toast.type === 'info' && <Info size={18} color="var(--color-primary)" />}
+              {toast.type === 'success' && <CheckCircle2 size={16} />}
+              {toast.type === 'error' && <AlertTriangle size={16} />}
+              {toast.type === 'info' && <Info size={16} />}
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: '0.875rem' }}>{toast.title}</div>

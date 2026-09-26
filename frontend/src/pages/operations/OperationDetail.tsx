@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, CheckCircle2, Edit3, XCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle2, Edit3, XCircle } from '../../components/ui/icons';
 import { ConfirmationDialog } from '../../components/ui/ConfirmationDialog';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { LoadingState } from '../../components/ui/LoadingState';

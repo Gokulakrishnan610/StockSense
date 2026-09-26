@@ -7,7 +7,7 @@ import {
   RefreshCw,
   SlidersHorizontal,
   Layers,
-} from 'lucide-react';
+} from '../components/ui/icons';
 import { api } from '../services/api';
 import type {
   Category,
@@ -312,7 +312,7 @@ export const Dashboard: React.FC = () => {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.875rem' }}>
-          <SlidersHorizontal size={18} />
+          <SlidersHorizontal size={16} />
           <span>Filters:</span>
         </div>
 
@@ -384,7 +384,7 @@ export const Dashboard: React.FC = () => {
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Layers size={18} style={{ color: 'var(--color-primary)' }} />
+            <Layers size={16} style={{ color: 'var(--color-primary)' }} />
             <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600, color: 'var(--text-primary)' }}>
               Stock Availability & Reorder Status
             </h3>

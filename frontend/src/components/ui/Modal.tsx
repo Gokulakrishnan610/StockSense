@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X } from './icons';
 
 interface ModalProps {
   isOpen: boolean;
@@ -89,7 +89,7 @@ export const Modal: React.FC<ModalProps> = ({
               alignItems: 'center',
             }}
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 

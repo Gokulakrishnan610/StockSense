@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Edit3, Eye, Plus } from 'lucide-react';
+import { Edit3, Eye, Plus } from '../../components/ui/icons';
 import { DataTable, type Column } from '../../components/ui/DataTable';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';
@@ -147,7 +147,7 @@ export function OperationList<T extends OperationRecord>({
           onClick={() => navigate(`${meta.path}/new`)}
           style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
         >
-          <Plus size={18} /> New {meta.label}
+          <Plus size={16} /> New {meta.label}
         </button>
       </div>
 

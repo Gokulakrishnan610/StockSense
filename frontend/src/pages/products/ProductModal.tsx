@@ -3,7 +3,7 @@ import { Modal } from '../../components/ui/Modal';
 import type { Product, Category, Location, ProductCreateInput, ProductInput } from '../../types';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle } from '../../components/ui/icons';
 
 interface ProductModalProps {
   isOpen: boolean;

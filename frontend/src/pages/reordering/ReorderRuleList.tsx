@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Edit3, AlertCircle } from 'lucide-react';
+import { Plus, Edit3, AlertCircle } from '../../components/ui/icons';
 import { api } from '../../services/api';
 import type { ReorderRule, Product } from '../../types';
 import { useAuth } from '../../context/AuthContext';
@@ -178,7 +178,7 @@ export const ReorderRuleList: React.FC = () => {
             className="btn btn-primary"
             style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <Plus size={18} /> Configure Rule
+            <Plus size={16} /> Configure Rule
           </button>
         )}
       </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { AlertCircle, ArrowLeft, ArrowRight, Check, CheckCircle2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight, Check, CheckCircle2 } from '../../components/ui/icons';
 import { StatusBadge } from '../../components/ui/StatusBadge';
 import { api } from '../../services/api';
 import type { LedgerEntry, OperationStatusCode } from '../../types';
@@ -41,7 +41,7 @@ export const StatusSteps: React.FC<{
                 opacity: canceled ? 0.5 : 1,
               }}
             >
-              {done && <Check size={13} />}
+              {done && <Check size={12} />}
               {step.label}
             </span>
           </React.Fragment>

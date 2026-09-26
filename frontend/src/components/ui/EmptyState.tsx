@@ -1,5 +1,5 @@
 import React from 'react';
-import { PackageOpen } from 'lucide-react';
+import { PackageOpen } from './icons';
 
 interface EmptyStateProps {
   title?: string;
@@ -13,7 +13,7 @@ interface EmptyStateProps {
 export const EmptyState: React.FC<EmptyStateProps> = ({
   title = 'No records found',
   description = 'There are no items matching your criteria.',
-  icon = <PackageOpen size={40} style={{ color: 'var(--text-muted)' }} />,
+  icon = <PackageOpen size={24} style={{ color: 'var(--text-muted)' }} />,
   actionLabel,
   onAction,
   height = '240px',

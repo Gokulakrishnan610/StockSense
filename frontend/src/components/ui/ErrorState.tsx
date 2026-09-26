@@ -1,5 +1,5 @@
 import React from 'react';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw } from './icons';
 
 interface ErrorStateProps {
   title?: string;
@@ -30,7 +30,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         margin: '12px 0',
       }}
     >
-      <AlertCircle size={36} style={{ color: 'var(--color-danger)', marginBottom: '10px' }} />
+      <AlertCircle size={24} style={{ color: 'var(--color-danger)', marginBottom: '10px' }} />
       <h4 style={{ margin: '0 0 6px 0', fontSize: '1rem', fontWeight: 600, color: 'var(--color-danger)' }}>
         {title}
       </h4>
@@ -43,7 +43,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           className="btn btn-secondary"
           style={{ marginTop: '16px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
         >
-          <RefreshCw size={15} />
+          <RefreshCw size={14} />
           Retry
         </button>
       )}

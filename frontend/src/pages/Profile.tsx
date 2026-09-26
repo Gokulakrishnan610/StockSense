@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { StatusBadge } from '../components/ui/StatusBadge';
-import { User, Mail, Shield, Key, LogOut } from 'lucide-react';
+import { User, Mail, Shield, Key, LogOut } from '../components/ui/icons';
 import { useToast } from '../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -65,7 +65,7 @@ export const Profile: React.FC = () => {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid var(--border-color)', paddingTop: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <User size={18} style={{ color: 'var(--text-muted)' }} />
+            <User size={16} style={{ color: 'var(--text-muted)' }} />
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Login ID</div>
               <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{user.login_id}</div>
@@ -73,7 +73,7 @@ export const Profile: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Mail size={18} style={{ color: 'var(--text-muted)' }} />
+            <Mail size={16} style={{ color: 'var(--text-muted)' }} />
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Email Address</div>
               <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{user.email}</div>
@@ -81,7 +81,7 @@ export const Profile: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Shield size={18} style={{ color: 'var(--text-muted)' }} />
+            <Shield size={16} style={{ color: 'var(--text-muted)' }} />
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>User Role</div>
               <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{user.role}</div>
@@ -89,7 +89,7 @@ export const Profile: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <Key size={18} style={{ color: 'var(--text-muted)' }} />
+            <Key size={16} style={{ color: 'var(--text-muted)' }} />
             <div>
               <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>User Account UUID</div>
               <div style={{ fontFamily: 'monospace', fontSize: '0.8125rem', color: 'var(--text-muted)' }}>

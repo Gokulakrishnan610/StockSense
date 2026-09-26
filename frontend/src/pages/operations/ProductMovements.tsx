@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, History } from 'lucide-react';
+import { ArrowRight, History } from '../../components/ui/icons';
 import { api } from '../../services/api';
 import type { LedgerEntry, Product } from '../../types';
 import { MOVEMENT_LABELS, toMovementRows } from './ledgerUtils';

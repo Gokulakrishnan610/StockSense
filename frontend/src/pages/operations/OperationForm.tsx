@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowRight, Plus, Trash2 } from 'lucide-react';
+import { ArrowRight, Plus, Trash2 } from '../../components/ui/icons';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { useToast } from '../../context/ToastContext';
@@ -540,7 +540,7 @@ export const OperationForm: React.FC<{ kind: LineDocKind }> = ({ kind }) => {
                   {kind === 'transfer' && line.location_id && line.destination_location_id && (
                     <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                       From <strong>{catalog.locationLabel(line.location_id)}</strong>
-                      <ArrowRight size={13} />
+                      <ArrowRight size={12} />
                       To <strong>{catalog.locationLabel(line.destination_location_id)}</strong>
                     </span>
                   )}

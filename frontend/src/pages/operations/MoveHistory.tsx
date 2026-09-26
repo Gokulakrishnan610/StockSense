@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw } from '../../components/ui/icons';
 import { DataTable, type Column } from '../../components/ui/DataTable';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { FilterDropdown } from '../../components/ui/FilterDropdown';

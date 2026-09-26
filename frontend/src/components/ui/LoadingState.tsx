@@ -1,5 +1,5 @@
 import React from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from './icons';
 
 interface LoadingStateProps {
   message?: string;
@@ -23,7 +23,7 @@ export const LoadingState: React.FC<LoadingStateProps> = ({
       }}
     >
       <Loader2
-        size={28}
+        size={24}
         className="animate-spin"
         style={{ color: 'var(--color-primary)' }}
       />
