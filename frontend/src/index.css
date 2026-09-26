@@ -249,7 +249,8 @@ button, input, select, textarea { font: inherit; }
 button:focus-visible, a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .app-sidebar { position: fixed; inset: 0 auto 0 0; width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); z-index: 45; display: flex; flex-direction: column; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--text-primary); text-decoration: none; font-weight: 650; }
-.sidebar-brand { height: var(--header-height); padding: 0 20px; border-bottom: 1px solid var(--border-color); }
+.sidebar-brand { height: var(--header-height); padding: 0 12px 0 16px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+.sidebar-logo { height: 36px; width: auto; object-fit: contain; }
 .sidebar-nav { padding: 16px 10px; display: flex; flex-direction: column; gap: 3px; overflow-y: auto; flex: 1; }
 .nav-item { display: flex; align-items: center; gap: 11px; padding: 10px 12px; border-radius: 4px; color: var(--text-secondary); text-decoration: none; font-size: 13px; border: 0; background: transparent; text-align: left; cursor: pointer; }
 .nav-item:hover, .nav-item.active { background: #f0f0f1; color: var(--text-primary); }
@@ -266,8 +267,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--color-primary);
 .icon-button { border: 0; background: transparent; padding: 6px; color: inherit; cursor: pointer; display: inline-flex; align-items: center; }
 .auth-layout { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 36px 20px; background: white; }
 .auth-brand { text-align: center; margin-bottom: 28px; }
-.auth-brand .brand { flex-direction: column; gap: 5px; font-size: 22px; }
-.auth-brand p { margin-top: 4px; color: var(--text-muted); font-size: 12px; }
+.auth-logo { height: 80px; width: auto; object-fit: contain; }
 .auth-card { width: 100%; max-width: 400px; padding: 26px; border: 1px solid var(--border-color); border-radius: 5px; background: white; }
 .auth-card h1 { font-size: 16px; font-weight: 600; margin-bottom: 20px; }
 .auth-description { font-size: 13px; color: var(--text-secondary); margin: -8px 0 22px; }

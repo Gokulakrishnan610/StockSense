@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Package, FolderTree, Warehouse, MapPin, Sliders, Boxes,
+import { LayoutDashboard, Package, FolderTree, Warehouse, MapPin, Sliders,
   ArrowDownLeft, ArrowUpRight, ArrowLeftRight, RefreshCw, History, X, User, LogOut } from '../components/ui/icons';
 import { useAuth } from '../context/AuthContext';
 
@@ -22,8 +22,8 @@ export function Sidebar({ isOpen, onClose }: { isOpen: boolean; onClose: () => v
   return <>
     {isOpen && <div className="sidebar-backdrop" onClick={onClose} />}
     <aside id="app-navigation" className={`app-sidebar ${isOpen ? 'is-open' : ''}`}>
-      <div className="sidebar-brand brand">
-        <Boxes size={20} /><span>StockSense</span>
+      <div className="sidebar-brand">
+        <img src="/logo.png" alt="StockSense" className="sidebar-logo" />
         <button className="icon-button sidebar-close" onClick={onClose} aria-label="Close navigation"><X /></button>
       </div>
       <nav className="sidebar-nav" aria-label="Main navigation">
