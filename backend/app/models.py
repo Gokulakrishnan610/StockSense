@@ -176,9 +176,7 @@ class ReceiptItem(Identity, Timestamps, Base):
     product_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("products.id", ondelete="RESTRICT"), index=True
     )
-    location_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("locations.id", ondelete="RESTRICT")
-    )
+    location_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("locations.id", ondelete="RESTRICT"))
     quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4))
     __table_args__ = (CheckConstraint("quantity > 0", name="receipt_item_positive_qty"),)
 
@@ -201,9 +199,7 @@ class DeliveryItem(Identity, Timestamps, Base):
     product_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("products.id", ondelete="RESTRICT"), index=True
     )
-    location_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("locations.id", ondelete="RESTRICT")
-    )
+    location_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("locations.id", ondelete="RESTRICT"))
     quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4))
     __table_args__ = (CheckConstraint("quantity > 0", name="delivery_item_positive_qty"),)
 
@@ -243,9 +239,7 @@ class Adjustment(Identity, Timestamps, Base):
     product_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("products.id", ondelete="RESTRICT"), index=True
     )
-    location_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("locations.id", ondelete="RESTRICT")
-    )
+    location_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("locations.id", ondelete="RESTRICT"))
     counted_quantity: Mapped[Decimal] = mapped_column(Numeric(18, 4))
     recorded_quantity: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)
     delta: Mapped[Decimal | None] = mapped_column(Numeric(18, 4), nullable=True)

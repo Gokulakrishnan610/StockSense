@@ -10,20 +10,12 @@ no external services or mocks are needed beyond what the conftest sets up.
 
 from decimal import Decimal
 
-import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models import (
-    Adjustment,
-    Delivery,
-    DeliveryItem,
-    Receipt,
-    ReceiptItem,
     StockBalance,
     StockLedger,
-    Transfer,
-    TransferItem,
 )
 
 # ---------------------------------------------------------------------------
@@ -90,12 +82,8 @@ def _ready_transfer(client, manager, catalog, qty="40.0000"):
         },
         manager,
     )
-    client.post(
-        f"/transfers/{tid}/status", json={"status": "WAITING"}, headers=manager
-    )
-    client.post(
-        f"/transfers/{tid}/status", json={"status": "READY"}, headers=manager
-    )
+    client.post(f"/transfers/{tid}/status", json={"status": "WAITING"}, headers=manager)
+    client.post(f"/transfers/{tid}/status", json={"status": "READY"}, headers=manager)
     return tid
 
 
@@ -112,7 +100,7 @@ class TestReceipts:
         assert len(r.json()) >= 1
 
     def test_draft_does_not_change_stock(self, client, manager, catalog, engine):
-        rid = _ready_receipt(client, manager, catalog)
+        _ready_receipt(client, manager, catalog)
         # Create a *fresh* receipt (DRAFT, never validated)
         draft = _post(client, "/receipts", {"supplier": "Draft Only"}, manager)
         _post(
@@ -525,12 +513,8 @@ class TestCriticalDemoScenario:
             },
             manager,
         )
-        client.post(
-            f"/transfers/{tid}/status", json={"status": "WAITING"}, headers=manager
-        )
-        client.post(
-            f"/transfers/{tid}/status", json={"status": "READY"}, headers=manager
-        )
+        client.post(f"/transfers/{tid}/status", json={"status": "WAITING"}, headers=manager)
+        client.post(f"/transfers/{tid}/status", json={"status": "READY"}, headers=manager)
         r = client.post(f"/transfers/{tid}/validate", headers=manager)
         assert r.status_code == 200
 
@@ -615,9 +599,7 @@ class TestCriticalDemoScenario:
             # Verify ledger completeness: must have all four movement types
             types = set(
                 db.scalars(
-                    select(StockLedger.transaction_type).where(
-                        StockLedger.product_id == steel_id
-                    )
+                    select(StockLedger.transaction_type).where(StockLedger.product_id == steel_id)
                 ).all()
             )
             assert "RECEIPT" in types

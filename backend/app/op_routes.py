@@ -11,10 +11,10 @@ Operations follow the same pattern as Member 1's catalog routes:
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query
 
 from app import op_schemas as s
-from app.dependencies import DB, CurrentUser, Manager, current_user
+from app.dependencies import DB, CurrentUser, current_user
 from app.services import operations as ops
 
 op_router = APIRouter(dependencies=[Depends(current_user)])
@@ -140,9 +140,7 @@ def pack_delivery(id: UUID, db: DB, user: CurrentUser):
     return ops.pack_delivery(db, id)
 
 
-@op_router.post(
-    "/deliveries/{id}/validate", response_model=s.DeliveryOutput, tags=["Deliveries"]
-)
+@op_router.post("/deliveries/{id}/validate", response_model=s.DeliveryOutput, tags=["Deliveries"])
 def validate_delivery(id: UUID, db: DB, user: CurrentUser):
     """Validate a READY delivery → decrease stock + create ledger entries."""
     return ops.validate_delivery(db, id, user_id=user.id)
@@ -163,9 +161,7 @@ def list_transfers(
     return ops.list_transfers(db, status=status, offset=offset, limit=limit)
 
 
-@op_router.post(
-    "/transfers", response_model=s.TransferOutput, status_code=201, tags=["Transfers"]
-)
+@op_router.post("/transfers", response_model=s.TransferOutput, status_code=201, tags=["Transfers"])
 def create_transfer(data: s.TransferInput, db: DB, user: CurrentUser):
     return ops.create_transfer(db, notes=data.notes, user_id=user.id)
 
@@ -197,17 +193,13 @@ def add_transfer_item(id: UUID, data: s.TransferItemInput, db: DB, user: Current
     )
 
 
-@op_router.post(
-    "/transfers/{id}/status", response_model=s.TransferOutput, tags=["Transfers"]
-)
+@op_router.post("/transfers/{id}/status", response_model=s.TransferOutput, tags=["Transfers"])
 def update_transfer_status(id: UUID, data: s.ReceiptStatusInput, db: DB, user: CurrentUser):
     """Advance through Draft→Waiting→Ready or cancel."""
     return ops.set_transfer_status(db, id, data.status)
 
 
-@op_router.post(
-    "/transfers/{id}/validate", response_model=s.TransferOutput, tags=["Transfers"]
-)
+@op_router.post("/transfers/{id}/validate", response_model=s.TransferOutput, tags=["Transfers"])
 def validate_transfer(id: UUID, db: DB, user: CurrentUser):
     """Validate a READY transfer → move stock between locations atomically."""
     return ops.validate_transfer(db, id, user_id=user.id)
@@ -260,9 +252,7 @@ def validate_adjustment(id: UUID, db: DB, user: CurrentUser):
 # ---------------------------------------------------------------------------
 
 
-@op_router.get(
-    "/inventory/ledger", response_model=list[s.LedgerOutput], tags=["Inventory"]
-)
+@op_router.get("/inventory/ledger", response_model=list[s.LedgerOutput], tags=["Inventory"])
 def inventory_ledger(
     db: DB,
     product_id: UUID | None = None,
@@ -281,9 +271,7 @@ def inventory_ledger(
     )
 
 
-@op_router.get(
-    "/inventory/stock", response_model=list[s.StockSummaryOutput], tags=["Inventory"]
-)
+@op_router.get("/inventory/stock", response_model=list[s.StockSummaryOutput], tags=["Inventory"])
 def inventory_stock(
     db: DB,
     warehouse_id: UUID | None = None,

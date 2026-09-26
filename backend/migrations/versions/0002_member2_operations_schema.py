@@ -189,13 +189,9 @@ def upgrade():
             nullable=False,
         ),
         sa.CheckConstraint("quantity > 0", name="transfer_item_positive_qty"),
-        sa.ForeignKeyConstraint(
-            ["destination_location_id"], ["locations.id"], ondelete="RESTRICT"
-        ),
+        sa.ForeignKeyConstraint(["destination_location_id"], ["locations.id"], ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["product_id"], ["products.id"], ondelete="RESTRICT"),
-        sa.ForeignKeyConstraint(
-            ["source_location_id"], ["locations.id"], ondelete="RESTRICT"
-        ),
+        sa.ForeignKeyConstraint(["source_location_id"], ["locations.id"], ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["transfer_id"], ["transfers.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
@@ -241,9 +237,7 @@ def upgrade():
         sa.ForeignKeyConstraint(["product_id"], ["products.id"], ondelete="RESTRICT"),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        op.f("ix_adjustments_product_id"), "adjustments", ["product_id"], unique=False
-    )
+    op.create_index(op.f("ix_adjustments_product_id"), "adjustments", ["product_id"], unique=False)
 
 
 def downgrade():

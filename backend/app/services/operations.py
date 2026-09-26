@@ -15,7 +15,7 @@ mutations in the caller's open transaction — callers hold the transaction
 """
 
 from decimal import Decimal
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -98,9 +98,7 @@ def create_receipt(db: Session, *, supplier: str, notes: str, user_id: UUID) -> 
     return receipt
 
 
-def update_receipt(
-    db: Session, receipt_id: UUID, *, supplier: str, notes: str
-) -> Receipt:
+def update_receipt(db: Session, receipt_id: UUID, *, supplier: str, notes: str) -> Receipt:
     receipt = _require(db, Receipt, receipt_id)
     _assert_not_terminal(receipt, "Receipt")
     receipt.supplier = supplier
@@ -134,16 +132,12 @@ def add_receipt_item(
 
 def validate_receipt(db: Session, receipt_id: UUID, *, user_id: UUID) -> Receipt:
     """Transition receipt to DONE, increasing stock for each line atomically."""
-    receipt = db.scalar(
-        select(Receipt).where(Receipt.id == receipt_id).with_for_update()
-    )
+    receipt = db.scalar(select(Receipt).where(Receipt.id == receipt_id).with_for_update())
     if receipt is None:
         raise not_found("Receipt")
     _assert_status(receipt, "READY", "Receipt")
 
-    items = db.scalars(
-        select(ReceiptItem).where(ReceiptItem.receipt_id == receipt_id)
-    ).all()
+    items = db.scalars(select(ReceiptItem).where(ReceiptItem.receipt_id == receipt_id)).all()
     if not items:
         raise DomainError(409, "EMPTY_OPERATION", "Receipt has no items to validate")
 
@@ -258,16 +252,12 @@ def pack_delivery(db: Session, delivery_id: UUID) -> Delivery:
 
 def validate_delivery(db: Session, delivery_id: UUID, *, user_id: UUID) -> Delivery:
     """Transition delivery to DONE, decreasing stock atomically."""
-    delivery = db.scalar(
-        select(Delivery).where(Delivery.id == delivery_id).with_for_update()
-    )
+    delivery = db.scalar(select(Delivery).where(Delivery.id == delivery_id).with_for_update())
     if delivery is None:
         raise not_found("Delivery")
     _assert_status(delivery, "READY", "Delivery")
 
-    items = db.scalars(
-        select(DeliveryItem).where(DeliveryItem.delivery_id == delivery_id)
-    ).all()
+    items = db.scalars(select(DeliveryItem).where(DeliveryItem.delivery_id == delivery_id)).all()
     if not items:
         raise DomainError(409, "EMPTY_OPERATION", "Delivery has no items to validate")
 
@@ -378,16 +368,12 @@ def validate_transfer(db: Session, transfer_id: UUID, *, user_id: UUID) -> Trans
     Global stock is preserved: source balance decreases by the same amount
     that destination balance increases.
     """
-    transfer = db.scalar(
-        select(Transfer).where(Transfer.id == transfer_id).with_for_update()
-    )
+    transfer = db.scalar(select(Transfer).where(Transfer.id == transfer_id).with_for_update())
     if transfer is None:
         raise not_found("Transfer")
     _assert_status(transfer, "READY", "Transfer")
 
-    items = db.scalars(
-        select(TransferItem).where(TransferItem.transfer_id == transfer_id)
-    ).all()
+    items = db.scalars(select(TransferItem).where(TransferItem.transfer_id == transfer_id)).all()
     if not items:
         raise DomainError(409, "EMPTY_OPERATION", "Transfer has no items to validate")
 
@@ -473,9 +459,7 @@ def create_adjustment(
     return adjustment
 
 
-def validate_adjustment(
-    db: Session, adjustment_id: UUID, *, user_id: UUID
-) -> Adjustment:
+def validate_adjustment(db: Session, adjustment_id: UUID, *, user_id: UUID) -> Adjustment:
     """Calculate the difference between recorded and counted qty, update stock."""
     adjustment = db.scalar(
         select(Adjustment).where(Adjustment.id == adjustment_id).with_for_update()
@@ -485,11 +469,7 @@ def validate_adjustment(
     _assert_status(adjustment, "DRAFT", "Adjustment")
 
     # Lock the product row.
-    db.scalar(
-        select(Product.id)
-        .where(Product.id == adjustment.product_id)
-        .with_for_update()
-    )
+    db.scalar(select(Product.id).where(Product.id == adjustment.product_id).with_for_update())
 
     balance = db.get(StockBalance, (adjustment.product_id, adjustment.location_id))
     recorded = balance.quantity if balance else Decimal("0")
@@ -563,11 +543,15 @@ def list_stock(
         q = q.where(Loc.warehouse_id == warehouse_id)
     if location_id:
         q = q.where(StockBalance.location_id == location_id)
-    return db.execute(
-        q.order_by(StockBalance.product_id, StockBalance.location_id)
-        .offset(offset)
-        .limit(limit)
-    ).mappings().all()
+    return (
+        db.execute(
+            q.order_by(StockBalance.product_id, StockBalance.location_id)
+            .offset(offset)
+            .limit(limit)
+        )
+        .mappings()
+        .all()
+    )
 
 
 def get_product_stock(
@@ -582,19 +566,21 @@ def get_product_stock(
     from app.models import Location as Loc
 
     _require(db, Product, product_id)
-    q = select(
-        StockBalance.product_id,
-        StockBalance.location_id,
-        Loc.warehouse_id,
-        StockBalance.quantity,
-    ).join(Loc).where(StockBalance.product_id == product_id)
+    q = (
+        select(
+            StockBalance.product_id,
+            StockBalance.location_id,
+            Loc.warehouse_id,
+            StockBalance.quantity,
+        )
+        .join(Loc)
+        .where(StockBalance.product_id == product_id)
+    )
     if warehouse_id:
         q = q.where(Loc.warehouse_id == warehouse_id)
     if location_id:
         q = q.where(StockBalance.location_id == location_id)
-    return db.execute(
-        q.order_by(Loc.id).offset(offset).limit(limit)
-    ).mappings().all()
+    return db.execute(q.order_by(Loc.id).offset(offset).limit(limit)).mappings().all()
 
 
 # ---------------------------------------------------------------------------
@@ -617,14 +603,11 @@ def list_low_stock(db: Session, *, offset: int, limit: int):
             ReorderRule.product_id,
             ReorderRule.minimum_stock,
             ReorderRule.reorder_quantity,
-            func.coalesce(total_stock.c.total_quantity, Decimal("0")).label(
-                "total_quantity"
-            ),
+            func.coalesce(total_stock.c.total_quantity, Decimal("0")).label("total_quantity"),
         )
         .outerjoin(total_stock, ReorderRule.product_id == total_stock.c.product_id)
         .where(
-            func.coalesce(total_stock.c.total_quantity, Decimal("0"))
-            <= ReorderRule.minimum_stock
+            func.coalesce(total_stock.c.total_quantity, Decimal("0")) <= ReorderRule.minimum_stock
         )
         .order_by(ReorderRule.product_id)
         .offset(offset)
