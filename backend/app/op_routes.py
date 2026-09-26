@@ -8,6 +8,7 @@ Operations follow the same pattern as Member 1's catalog routes:
   - Service calls apply_delta and the DB session auto-commits on success
 """
 
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -68,6 +69,20 @@ def add_receipt_item(id: UUID, data: s.ReceiptItemInput, db: DB, user: CurrentUs
     )
 
 
+@op_router.get(
+    "/receipts/{id}/items",
+    response_model=list[s.ReceiptItemOutput],
+    tags=["Receipts"],
+)
+def list_receipt_items(id: UUID, db: DB):
+    return ops.list_receipt_items(db, id)
+
+
+@op_router.delete("/receipts/{id}/items/{item_id}", status_code=204, tags=["Receipts"])
+def remove_receipt_item(id: UUID, item_id: UUID, db: DB, user: CurrentUser):
+    ops.remove_receipt_item(db, id, item_id)
+
+
 @op_router.post("/receipts/{id}/status", response_model=s.ReceiptOutput, tags=["Receipts"])
 def update_receipt_status(id: UUID, data: s.ReceiptStatusInput, db: DB, user: CurrentUser):
     """Advance through Draft→Waiting→Ready or cancel."""
@@ -126,6 +141,26 @@ def add_delivery_item(id: UUID, data: s.DeliveryItemInput, db: DB, user: Current
         location_id=data.location_id,
         quantity=data.quantity,
     )
+
+
+@op_router.get(
+    "/deliveries/{id}/items",
+    response_model=list[s.DeliveryItemOutput],
+    tags=["Deliveries"],
+)
+def list_delivery_items(id: UUID, db: DB):
+    return ops.list_delivery_items(db, id)
+
+
+@op_router.delete("/deliveries/{id}/items/{item_id}", status_code=204, tags=["Deliveries"])
+def remove_delivery_item(id: UUID, item_id: UUID, db: DB, user: CurrentUser):
+    ops.remove_delivery_item(db, id, item_id)
+
+
+@op_router.post("/deliveries/{id}/cancel", response_model=s.DeliveryOutput, tags=["Deliveries"])
+def cancel_delivery(id: UUID, db: DB, user: CurrentUser):
+    """Cancel a delivery before validation; stock is not changed."""
+    return ops.cancel_delivery(db, id)
 
 
 @op_router.post("/deliveries/{id}/pick", response_model=s.DeliveryOutput, tags=["Deliveries"])
@@ -193,6 +228,20 @@ def add_transfer_item(id: UUID, data: s.TransferItemInput, db: DB, user: Current
     )
 
 
+@op_router.get(
+    "/transfers/{id}/items",
+    response_model=list[s.TransferItemOutput],
+    tags=["Transfers"],
+)
+def list_transfer_items(id: UUID, db: DB):
+    return ops.list_transfer_items(db, id)
+
+
+@op_router.delete("/transfers/{id}/items/{item_id}", status_code=204, tags=["Transfers"])
+def remove_transfer_item(id: UUID, item_id: UUID, db: DB, user: CurrentUser):
+    ops.remove_transfer_item(db, id, item_id)
+
+
 @op_router.post("/transfers/{id}/status", response_model=s.TransferOutput, tags=["Transfers"])
 def update_transfer_status(id: UUID, data: s.ReceiptStatusInput, db: DB, user: CurrentUser):
     """Advance through Draft→Waiting→Ready or cancel."""
@@ -239,6 +288,12 @@ def get_adjustment(id: UUID, db: DB):
     return ops.get_adjustment(db, id)
 
 
+@op_router.post("/adjustments/{id}/cancel", response_model=s.AdjustmentOutput, tags=["Adjustments"])
+def cancel_adjustment(id: UUID, db: DB, user: CurrentUser):
+    """Cancel a DRAFT adjustment; stock is not changed."""
+    return ops.cancel_adjustment(db, id)
+
+
 @op_router.post(
     "/adjustments/{id}/validate", response_model=s.AdjustmentOutput, tags=["Adjustments"]
 )
@@ -258,6 +313,11 @@ def inventory_ledger(
     product_id: UUID | None = None,
     location_id: UUID | None = None,
     transaction_type: str | None = None,
+    warehouse_id: UUID | None = None,
+    category_id: UUID | None = None,
+    reference_id: Annotated[str | None, Query(max_length=120)] = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
     offset: Offset = 0,
     limit: Limit = 100,
 ):
@@ -266,6 +326,11 @@ def inventory_ledger(
         product_id=product_id,
         location_id=location_id,
         transaction_type=transaction_type,
+        warehouse_id=warehouse_id,
+        category_id=category_id,
+        reference_id=reference_id,
+        date_from=date_from,
+        date_to=date_to,
         offset=offset,
         limit=limit,
     )

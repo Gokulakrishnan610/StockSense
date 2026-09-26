@@ -14,6 +14,7 @@ mutations in the caller's open transaction — callers hold the transaction
 (FastAPI dependency or test fixture) and this module never commits.
 """
 
+from datetime import datetime
 from decimal import Decimal
 from uuid import UUID
 
@@ -34,6 +35,7 @@ from app.models import (
     StockLedger,
     Transfer,
     TransferItem,
+    User,
 )
 from app.services.inventory import apply_delta
 
@@ -73,6 +75,24 @@ def _assert_status(op, required: str, name: str):
             "INVALID_STATUS",
             f"{name} must be in '{required}' status to perform this action (current: {op.status})",
         )
+
+
+def _list_items(db: Session, parent_model, item_model, fk, parent_id: UUID):
+    _require(db, parent_model, parent_id)
+    return db.scalars(
+        select(item_model).where(fk == parent_id).order_by(item_model.created_at, item_model.id)
+    ).all()
+
+
+def _remove_item(db: Session, parent_model, item_model, fk_name: str, parent_id: UUID, item_id):
+    """Remove a line from an operation that has not reached a terminal status."""
+    parent = _require(db, parent_model, parent_id)
+    _assert_not_terminal(parent, parent_model.__name__)
+    item = db.get(item_model, item_id)
+    if item is None or getattr(item, fk_name) != parent_id:
+        raise not_found(item_model.__name__)
+    db.delete(item)
+    db.flush()
 
 
 # ---------------------------------------------------------------------------
@@ -128,6 +148,14 @@ def add_receipt_item(
     db.add(item)
     db.flush()
     return item
+
+
+def list_receipt_items(db: Session, receipt_id: UUID):
+    return _list_items(db, Receipt, ReceiptItem, ReceiptItem.receipt_id, receipt_id)
+
+
+def remove_receipt_item(db: Session, receipt_id: UUID, item_id: UUID) -> None:
+    _remove_item(db, Receipt, ReceiptItem, "receipt_id", receipt_id, item_id)
 
 
 def validate_receipt(db: Session, receipt_id: UUID, *, user_id: UUID) -> Receipt:
@@ -232,6 +260,23 @@ def add_delivery_item(
     db.add(item)
     db.flush()
     return item
+
+
+def list_delivery_items(db: Session, delivery_id: UUID):
+    return _list_items(db, Delivery, DeliveryItem, DeliveryItem.delivery_id, delivery_id)
+
+
+def remove_delivery_item(db: Session, delivery_id: UUID, item_id: UUID) -> None:
+    _remove_item(db, Delivery, DeliveryItem, "delivery_id", delivery_id, item_id)
+
+
+def cancel_delivery(db: Session, delivery_id: UUID) -> Delivery:
+    """Cancel a delivery that has not been validated; stock is never touched."""
+    delivery = _require(db, Delivery, delivery_id)
+    _assert_not_terminal(delivery, "Delivery")
+    delivery.status = "CANCELED"
+    db.flush()
+    return delivery
 
 
 def pick_delivery(db: Session, delivery_id: UUID) -> Delivery:
@@ -347,6 +392,14 @@ def add_transfer_item(
     return item
 
 
+def list_transfer_items(db: Session, transfer_id: UUID):
+    return _list_items(db, Transfer, TransferItem, TransferItem.transfer_id, transfer_id)
+
+
+def remove_transfer_item(db: Session, transfer_id: UUID, item_id: UUID) -> None:
+    _remove_item(db, Transfer, TransferItem, "transfer_id", transfer_id, item_id)
+
+
 def set_transfer_status(db: Session, transfer_id: UUID, new_status: str) -> Transfer:
     transfer = _require(db, Transfer, transfer_id)
     _assert_not_terminal(transfer, "Transfer")
@@ -459,6 +512,15 @@ def create_adjustment(
     return adjustment
 
 
+def cancel_adjustment(db: Session, adjustment_id: UUID) -> Adjustment:
+    """Cancel a draft adjustment; stock is never touched."""
+    adjustment = _require(db, Adjustment, adjustment_id)
+    _assert_status(adjustment, "DRAFT", "Adjustment")
+    adjustment.status = "CANCELED"
+    db.flush()
+    return adjustment
+
+
 def validate_adjustment(db: Session, adjustment_id: UUID, *, user_id: UUID) -> Adjustment:
     """Calculate the difference between recorded and counted qty, update stock."""
     adjustment = db.scalar(
@@ -512,15 +574,39 @@ def list_ledger(
     transaction_type: str | None,
     offset: int,
     limit: int,
+    warehouse_id: UUID | None = None,
+    category_id: UUID | None = None,
+    reference_id: str | None = None,
+    date_from: datetime | None = None,
+    date_to: datetime | None = None,
 ):
-    q = select(StockLedger).order_by(StockLedger.created_at.desc())
+    """Return ledger rows newest first, each with the acting user's display name."""
+    q = select(StockLedger, User.name.label("user_name")).join(User, StockLedger.user_id == User.id)
     if product_id:
         q = q.where(StockLedger.product_id == product_id)
     if location_id:
         q = q.where(StockLedger.location_id == location_id)
     if transaction_type:
         q = q.where(StockLedger.transaction_type == transaction_type)
-    return db.scalars(q.offset(offset).limit(limit)).all()
+    if warehouse_id:
+        warehouse_locations = select(Location.id).where(Location.warehouse_id == warehouse_id)
+        q = q.where(StockLedger.location_id.in_(warehouse_locations))
+    if category_id:
+        category_products = select(Product.id).where(Product.category_id == category_id)
+        q = q.where(StockLedger.product_id.in_(category_products))
+    if reference_id:
+        q = q.where(StockLedger.reference_id == reference_id)
+    if date_from:
+        q = q.where(StockLedger.created_at >= date_from)
+    if date_to:
+        q = q.where(StockLedger.created_at <= date_to)
+    q = q.order_by(StockLedger.created_at.desc(), StockLedger.id).offset(offset).limit(limit)
+    rows = []
+    for entry, user_name in db.execute(q).all():
+        row = {column.key: getattr(entry, column.key) for column in StockLedger.__table__.columns}
+        row["user_name"] = user_name
+        rows.append(row)
+    return rows
 
 
 def list_stock(

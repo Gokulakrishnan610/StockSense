@@ -174,6 +174,7 @@ class LedgerOutput(Output):
     from_location_id: UUID | None
     to_location_id: UUID | None
     user_id: UUID
+    user_name: str
     created_at: datetime
 
 

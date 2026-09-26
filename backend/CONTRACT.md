@@ -180,3 +180,18 @@ This stage has no receipt/delivery/transfer/adjustment routes, no dashboard/aler
 implementation, and no frontend. Tests exercise the shared stock primitive without
 adding those workflows. SMTP dispatch is replaced by an in-memory inbox in API
 tests; configure a real/local SMTP server to verify delivery in your environment.
+
+## Operations UI support (Member 4 integration)
+
+Additive endpoints consumed by the operations frontend; existing contracts are unchanged.
+
+| Method | Endpoint | Notes |
+| --- | --- | --- |
+| GET | `/receipts/{id}/items`, `/deliveries/{id}/items`, `/transfers/{id}/items` | Operation lines in creation order |
+| DELETE | `/{receipts,deliveries,transfers}/{id}/items/{item_id}` | `204`; `409 ALREADY_TERMINAL` once Done/Canceled |
+| POST | `/deliveries/{id}/cancel` | Any non-terminal delivery; stock is not touched |
+| POST | `/adjustments/{id}/cancel` | Draft adjustments only |
+
+`GET /inventory/ledger` additionally accepts `warehouse_id`, `category_id`,
+`reference_id`, `date_from`, and `date_to` (ISO 8601), and each row includes the acting
+user's `user_name`.
