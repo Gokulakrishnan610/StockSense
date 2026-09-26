@@ -1,6 +1,8 @@
+import { PasswordInput } from '../../components/ui/PasswordInput';
+import { AuthLayout } from '../../layouts/AuthLayout';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Boxes, UserPlus, AlertCircle } from 'lucide-react';
+import { UserPlus, AlertCircle } from '../../components/ui/icons';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 
@@ -9,6 +11,7 @@ export const Signup: React.FC = () => {
   const [email, setEmail] = useState('');
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -31,6 +34,7 @@ export const Signup: React.FC = () => {
     if (!password || password.length < 10) {
       errors.password = 'Password must be at least 10 characters.';
     }
+    if (password !== confirmPassword) errors.confirmPassword = 'Passwords must match.';
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -67,52 +71,7 @@ export const Signup: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'var(--bg-app)',
-        padding: '24px',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '460px',
-          backgroundColor: 'var(--surface-card)',
-          borderRadius: '16px',
-          padding: '36px',
-          boxShadow: 'var(--shadow-xl)',
-          border: '1px solid var(--border-color)',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--color-primary)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              marginBottom: '12px',
-              boxShadow: '0 0 16px rgba(99, 102, 241, 0.4)',
-            }}
-          >
-            <Boxes size={28} />
-          </div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
-            Create StockSense Account
-          </h2>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: 0 }}>
-            Register as Warehouse Staff to access inventory
-          </p>
-        </div>
-
+    <AuthLayout title="Create your account" description="">
         {errorMessage && (
           <div
             style={{
@@ -128,7 +87,7 @@ export const Signup: React.FC = () => {
               marginBottom: '20px',
             }}
           >
-            <AlertCircle size={18} style={{ flexShrink: 0 }} />
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
             <span>{errorMessage}</span>
           </div>
         )}
@@ -175,8 +134,7 @@ export const Signup: React.FC = () => {
 
           <div className="form-group">
             <label className="form-label">Password (Min 10 characters)</label>
-            <input
-              type="password"
+            <PasswordInput
               className="form-input"
               placeholder="••••••••••••"
               value={password}
@@ -186,6 +144,12 @@ export const Signup: React.FC = () => {
             {fieldErrors.password && <div className="form-error">{fieldErrors.password}</div>}
           </div>
 
+          <div className="form-group">
+            <label className="form-label" htmlFor="confirm-password">Confirm Password</label>
+            <PasswordInput id="confirm-password" className="form-input" autoComplete="new-password"
+              value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} disabled={submitting} />
+            {fieldErrors.confirmPassword && <div className="form-error">{fieldErrors.confirmPassword}</div>}
+          </div>
           <button
             type="submit"
             className="btn btn-primary"
@@ -196,7 +160,7 @@ export const Signup: React.FC = () => {
               'Creating Account...'
             ) : (
               <>
-                <UserPlus size={18} /> Register Account
+                <UserPlus size={16} /> Register Account
               </>
             )}
           </button>
@@ -208,7 +172,6 @@ export const Signup: React.FC = () => {
             Sign In
           </Link>
         </div>
-      </div>
-    </div>
+    </AuthLayout>
   );
 };

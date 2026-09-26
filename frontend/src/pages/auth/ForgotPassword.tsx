@@ -1,6 +1,7 @@
+import { AuthLayout } from '../../layouts/AuthLayout';
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { KeyRound, ArrowLeft, AlertCircle } from 'lucide-react';
+import { ArrowLeft, AlertCircle } from '../../components/ui/icons';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 
@@ -35,51 +36,7 @@ export const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'var(--bg-app)',
-        padding: '24px',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '420px',
-          backgroundColor: 'var(--surface-card)',
-          borderRadius: '16px',
-          padding: '36px',
-          boxShadow: 'var(--shadow-xl)',
-          border: '1px solid var(--border-color)',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <div
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              backgroundColor: 'var(--color-primary-light)',
-              color: 'var(--color-primary)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: '12px',
-            }}
-          >
-            <KeyRound size={28} />
-          </div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
-            Forgot Password
-          </h2>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', margin: 0 }}>
-            Enter your email to receive a 6-digit verification code
-          </p>
-        </div>
-
+    <AuthLayout title="Reset your password" description="Enter your email and we’ll send you an OTP.">
         {errorMessage && (
           <div
             style={{
@@ -95,7 +52,7 @@ export const ForgotPassword: React.FC = () => {
               marginBottom: '20px',
             }}
           >
-            <AlertCircle size={18} style={{ flexShrink: 0 }} />
+            <AlertCircle size={16} style={{ flexShrink: 0 }} />
             <span>{errorMessage}</span>
           </div>
         )}
@@ -139,7 +96,6 @@ export const ForgotPassword: React.FC = () => {
             <ArrowLeft size={16} /> Back to Sign In
           </Link>
         </div>
-      </div>
-    </div>
+    </AuthLayout>
   );
 };
