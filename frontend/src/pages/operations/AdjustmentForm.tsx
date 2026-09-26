@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { ArrowLeft } from '../../components/ui/icons';
 import { Select } from '../../components/ui/Select';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
-import { BackLink, InlineAlert, QuantityText } from './OperationComponents';
+import { InlineAlert, QuantityText } from './OperationComponents';
+import './operations.css';
 import {
   DOC_KINDS,
   docRef,
@@ -99,18 +101,21 @@ export const AdjustmentForm: React.FC = () => {
   const busy = submitting !== null;
 
   return (
-    <div>
-      <BackLink to={meta.path} label={`Back to ${meta.plural}`} />
-      <div className="page-header">
-        <div>
-          <h2 className="page-title">Create Adjustment</h2>
+    <div className="op-form-page">
+      <div className="op-page-header">
+        <button className="icon-button" onClick={() => navigate(meta.path)} aria-label="Back">
+          <ArrowLeft size={20} />
+        </button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h2 className="page-title">Create Inventory Adjustment</h2>
           <p className="page-subtitle">
-            Record a physical count; the backend calculates the difference against the system quantity
+            Record a physical count; the backend calculates the difference against the system quantity.
           </p>
         </div>
+        <Link to={meta.path} className="panel-link">Cancel</Link>
       </div>
 
-      <div className="card">
+      <div className="card op-form">
         {formError && <InlineAlert>{formError}</InlineAlert>}
 
         <div
@@ -233,7 +238,9 @@ export const AdjustmentForm: React.FC = () => {
           />
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+        <div className="op-form-footer">
+          <span className="form-hint">Validating sets the location quantity to the physical count and records the difference.</span>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <button className="btn btn-secondary" onClick={() => navigate(meta.path)} disabled={busy}>
             Cancel
           </button>
@@ -243,6 +250,7 @@ export const AdjustmentForm: React.FC = () => {
           <button className="btn btn-primary" onClick={() => submit('validate')} disabled={busy}>
             {submitting === 'validate' ? 'Validating...' : 'Validate Adjustment'}
           </button>
+          </div>
         </div>
       </div>
     </div>

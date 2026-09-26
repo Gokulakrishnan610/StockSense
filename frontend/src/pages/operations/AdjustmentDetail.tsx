@@ -1,25 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { notifyOperationsChanged } from '../../layouts/useNavCounts';
-import { useParams } from 'react-router-dom';
-import { CheckCircle2, XCircle } from '../../components/ui/icons';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, CheckCircle2, History, XCircle } from '../../components/ui/icons';
 import { ConfirmationDialog } from '../../components/ui/ConfirmationDialog';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { LoadingState } from '../../components/ui/LoadingState';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
 import type { Adjustment } from '../../types';
-import {
-  BackLink,
-  InfoItem,
-  InlineAlert,
-  OperationStatusBadge,
-  QuantityText,
-  StatusSteps,
-  StockUpdatePanel,
-  InfoGrid,
-} from './OperationComponents';
+import { InlineAlert, OperationStatusBadge, QuantityText, StockUpdatePanel } from './OperationComponents';
+import { ActivityTrail, CopyRef, PrintButton, PrintSlip, Stepper, type ActivityEvent } from './DocumentParts';
+import './operations.css';
 import {
   DOC_KINDS,
+  STATUS_LABELS,
   docRef,
   errorMessage,
   formatDateTime,
@@ -36,6 +30,7 @@ const STEPS = [
 export const AdjustmentDetail: React.FC = () => {
   const { id = '' } = useParams<{ id: string }>();
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const meta = DOC_KINDS.adjustment;
   const { catalog, loading: catalogLoading, error: catalogError } = useCatalog();
   const { ensure: ensureStock, available } = useStockLookup();
@@ -109,60 +104,134 @@ export const AdjustmentDetail: React.FC = () => {
     }
   };
 
+  const product = catalog.productById.get(adjustment.product_id);
+  const events: ActivityEvent[] = [
+    { key: 'created', at: adjustment.created_at, title: 'Count recorded', detail: `Physical count ${formatQty(adjustment.counted_quantity, unit)}` },
+  ];
+  if (adjustment.status !== 'DRAFT') {
+    events.push({
+      key: 'closed',
+      at: adjustment.updated_at,
+      title: adjustment.status === 'DONE' ? 'Validated — stock reconciled' : 'Canceled',
+      detail:
+        adjustment.status === 'DONE'
+          ? `System ${formatQty(adjustment.recorded_quantity, unit)} → counted ${formatQty(adjustment.counted_quantity, unit)}`
+          : 'No stock was changed',
+      tone: adjustment.status === 'DONE' ? 'success' : 'danger',
+    });
+  }
+  events.reverse();
+
   return (
-    <div>
-      <BackLink to={meta.path} label={`Back to ${meta.plural}`} />
-      <div className="page-header">
-        <div>
-          <h2 className="page-title" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            Adjustment <span style={{ fontFamily: 'monospace' }}>{reference}</span>
+    <div className="op-detail-page">
+      <div className="op-page-header no-print">
+        <button className="icon-button" onClick={() => navigate(meta.path)} aria-label={`Back to ${meta.plural}`}>
+          <ArrowLeft size={20} />
+        </button>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="op-header-meta">
+            <CopyRef value={reference} />
             <OperationStatusBadge status={adjustment.status} />
-          </h2>
-          <p className="page-subtitle">Created {formatDateTime(adjustment.created_at)}</p>
-        </div>
-        {isDraft && (
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="btn btn-secondary" onClick={() => setPending('cancel')} disabled={running}>
-              <XCircle size={16} /> Cancel Adjustment
-            </button>
-            <button className="btn btn-primary" onClick={() => setPending('validate')} disabled={running}>
-              <CheckCircle2 size={16} /> Validate
-            </button>
+            <span className="cell-sub">Inventory Adjustment</span>
           </div>
-        )}
-      </div>
-
-      {actionError && <InlineAlert>{actionError}</InlineAlert>}
-      {adjustment.status === 'DONE' && (
-        <InlineAlert tone="success">Adjustment validated. Stock now matches the physical count.</InlineAlert>
-      )}
-      {adjustment.status === 'CANCELED' && (
-        <InlineAlert>This adjustment was canceled. No stock was changed.</InlineAlert>
-      )}
-
-      <div className="card">
-        <div style={{ marginBottom: '16px' }}>
-          <StatusSteps steps={STEPS} current={adjustment.status} />
+          <h2 className="page-title">{product?.name ?? 'Stock count'}</h2>
+          <p className="page-subtitle">Count at {catalog.locationLabel(adjustment.location_id)}</p>
         </div>
-        <InfoGrid>
-          <InfoItem label="Product">{catalog.productLabel(adjustment.product_id)}</InfoItem>
-          <InfoItem label="Location">{catalog.locationLabel(adjustment.location_id)}</InfoItem>
-          <InfoItem label={isDraft ? 'System Quantity (current)' : 'System Quantity'}>
-            {systemQty === undefined ? '…' : formatQty(systemQty, unit)}
-          </InfoItem>
-          <InfoItem label="Physical Count">{formatQty(adjustment.counted_quantity, unit)}</InfoItem>
-          <InfoItem label={isDraft ? 'Difference (preview)' : 'Difference'}>
-            {difference === undefined ? '—' : <QuantityText value={difference} unit={unit} />}
-          </InfoItem>
-        </InfoGrid>
-        <div style={{ marginTop: '16px' }}>
-          <InfoItem label="Reason">
-            <span style={{ fontWeight: 400 }}>{adjustment.reason}</span>
-          </InfoItem>
+        <div className="op-header-actions">
+          <PrintButton />
+          {isDraft && (
+            <>
+              <button className="btn btn-primary" onClick={() => setPending('validate')} disabled={running}>
+                <CheckCircle2 size={16} /> Validate
+              </button>
+              <button className="btn btn-danger-outline" onClick={() => setPending('cancel')} disabled={running}>
+                <XCircle size={16} /> Cancel
+              </button>
+            </>
+          )}
         </div>
       </div>
 
-      {adjustment.status === 'DONE' && <StockUpdatePanel referenceId={adjustment.id} catalog={catalog} />}
+      <div className="no-print">
+        {actionError && <InlineAlert>{actionError}</InlineAlert>}
+
+        <div className="card stepper-card">
+          <Stepper steps={STEPS} current={adjustment.status} />
+        </div>
+
+        <div className="summary-strip">
+          <div>
+            <span className="summary-label">{isDraft ? 'System Qty (now)' : 'System Qty'}</span>
+            <span className="summary-value">{systemQty === undefined ? '…' : formatQty(systemQty, unit)}</span>
+            <span className="cell-sub">{isDraft ? 'Re-read on validation' : 'At validation'}</span>
+          </div>
+          <div>
+            <span className="summary-label">Physical Count</span>
+            <span className="summary-value">{formatQty(adjustment.counted_quantity, unit)}</span>
+            <span className="cell-sub">Counted on the floor</span>
+          </div>
+          <div>
+            <span className="summary-label">{isDraft ? 'Difference (preview)' : 'Difference'}</span>
+            <span className="summary-value">
+              {difference === undefined ? '—' : <QuantityText value={difference} unit={unit} />}
+            </span>
+            <span className="cell-sub">Physical minus system</span>
+          </div>
+          <div>
+            <span className="summary-label">Location</span>
+            <span className="summary-value small mono">{catalog.locationLabel(adjustment.location_id)}</span>
+            <span className="cell-sub">{product?.sku}</span>
+          </div>
+        </div>
+
+        <section className="card panel">
+          <div className="panel-header">
+            <div className="panel-title">
+              <span className="dot dot-warning" />
+              <h3>Reason</h3>
+            </div>
+          </div>
+          <p className="panel-body" style={{ fontSize: 14 }}>{adjustment.reason}</p>
+        </section>
+
+        {adjustment.status === 'DONE' && <StockUpdatePanel referenceId={adjustment.id} catalog={catalog} />}
+
+        <section className="card panel" style={{ marginTop: 16 }}>
+          <div className="panel-header">
+            <div className="panel-title">
+              <History size={16} />
+              <h3>Activity & Audit Trail</h3>
+            </div>
+          </div>
+          <div className="panel-body">
+            <ActivityTrail events={events} />
+          </div>
+        </section>
+      </div>
+
+      <PrintSlip
+        title="Inventory Adjustment Slip"
+        reference={reference}
+        status={STATUS_LABELS[adjustment.status]}
+        meta={[
+          { label: 'Location', value: catalog.locationLabel(adjustment.location_id) },
+          { label: 'Created', value: formatDateTime(adjustment.created_at) },
+          { label: 'System quantity', value: systemQty === undefined ? '—' : formatQty(systemQty, unit) },
+          { label: 'Difference', value: difference === undefined ? '—' : formatQty(difference, unit) },
+        ]}
+        lines={[
+          {
+            sku: product?.sku ?? '',
+            name: product?.name ?? adjustment.product_id.slice(0, 8),
+            to: catalog.locationLabel(adjustment.location_id),
+            quantity: formatQty(adjustment.counted_quantity, unit),
+          },
+        ]}
+        showFrom={false}
+        showTo
+        notes={`Reason: ${adjustment.reason}`}
+        signatures={['Counted by', 'Approved by']}
+      />
 
       <ConfirmationDialog
         isOpen={pending !== null}
