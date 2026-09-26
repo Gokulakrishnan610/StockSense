@@ -2,10 +2,49 @@
   <img src="logo.png" alt="StockSense logo" width="220" />
   <h1>StockSense</h1>
   <p>Inventory and warehouse management, from incoming goods to an auditable stock ledger.</p>
-  <p>React · TypeScript · FastAPI · PostgreSQL · Redis · Celery</p>
 </div>
 
+<div align="center">
+
 [GitHub repository](https://github.com/Gokulakrishnan610/StockSense/) · [Problem statement](docs/StockSense.pdf) · [Excalidraw board](https://app.excalidraw.com/l/65VNwvy7c4X/3ENvQFu9o8R) · [API reference](docs/API.md)
+
+</div>
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology | Why |
+| --- | --- | --- |
+| **Backend Runtime** | Python 3.12 + Uvicorn | Mature `asyncio`, exact `Decimal` arithmetic, 30+ yr ecosystem |
+| **Backend Framework** | FastAPI + Pydantic V2 | Runtime schema validation, auto OpenAPI `/docs`, structured 422 errors |
+| **ORM & Migrations** | SQLAlchemy + Alembic | Full ORM power, DDL trigger migrations, row-level locking |
+| **Database** | PostgreSQL 15 | ACID transactions, `NUMERIC(18,4)`, immutable ledger triggers |
+| **Real-Time Events** | SSE (`text/event-stream`) | HTTP-native, zero client library, load-balancer transparent |
+| **Background Tasks** | Celery + Redis | Durable task queue, process isolation, retry semantics |
+| **Frontend** | React 18 + TypeScript + Vite | SPA with typed API client and custom CSS design system |
+| **Email** | Nodemailer-compatible SMTP | HTML OTP emails via Celery worker |
+| **Auth** | Argon2 + HS256 JWT | Secure password hashing, token-version invalidation |
+
+---
+
+## Contents
+
+- [Tech Stack](#️-tech-stack)
+- [Architectural Rationale & Technical Justifications](#-architectural-rationale--technical-justifications)
+- [Documentation](#documentation)
+- [Overview](#overview)
+- [Features and permissions](#features-and-permissions)
+- [Application flow](#application-flow)
+- [Inventory workflows](#inventory-workflows)
+- [Architecture and data flow](#architecture-and-data-flow)
+- [Data model](#data-model)
+- [API endpoints](#api-endpoints)
+- [Local setup](#local-setup)
+- [Checks and testing](#checks-and-testing)
+- [Odoo-provided Excalidraw design](#odoo-provided-excalidraw-design)
+- [Implementation notes and next steps](#implementation-notes-and-next-steps)
+- [Repository structure](#repository-structure)
 
 ---
 
@@ -89,23 +128,6 @@ StockSense's Alembic migrations install PostgreSQL DDL triggers (`BEFORE UPDATE`
 > **Design Philosophy:** StockSense chooses proven, composable primitives — Python, FastAPI, SQLAlchemy, SSE, Celery — that have individually earned trust in large-scale production systems. Combining niche or newly-emerged runtimes with query builders and WebSocket pub/sub buses may produce impressive benchmark numbers; it does not produce auditable, maintainable inventory infrastructure.
 
 ---
-
-
-## Contents
-
-- [Documentation](#documentation)
-- [Overview](#overview)
-- [Features and permissions](#features-and-permissions)
-- [Application flow](#application-flow)
-- [Inventory workflows](#inventory-workflows)
-- [Architecture and data flow](#architecture-and-data-flow)
-- [Data model](#data-model)
-- [API endpoints](#api-endpoints)
-- [Local setup](#local-setup)
-- [Checks and testing](#checks-and-testing)
-- [Odoo-provided Excalidraw design](#odoo-provided-excalidraw-design)
-- [Implementation notes and next steps](#implementation-notes-and-next-steps)
-- [Repository structure](#repository-structure)
 
 ## Documentation
 
