@@ -16,6 +16,7 @@ import {
   ChevronDown as ChevronDownGlyph,
   ChevronLeft as ChevronLeftGlyph,
   ChevronRight as ChevronRightGlyph,
+  Clock as ClockGlyph,
   Edit3 as Edit3Glyph,
   ExternalLink as ExternalLinkGlyph,
   Eye as EyeGlyph,
@@ -79,6 +80,7 @@ export const CheckCircle2 = withIconStyle(CheckCircle2Glyph);
 export const ChevronDown = withIconStyle(ChevronDownGlyph);
 export const ChevronLeft = withIconStyle(ChevronLeftGlyph);
 export const ChevronRight = withIconStyle(ChevronRightGlyph);
+export const Clock = withIconStyle(ClockGlyph);
 export const Edit3 = withIconStyle(Edit3Glyph);
 export const ExternalLink = withIconStyle(ExternalLinkGlyph);
 export const Eye = withIconStyle(EyeGlyph);
