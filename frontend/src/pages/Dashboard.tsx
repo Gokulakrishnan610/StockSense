@@ -9,7 +9,16 @@ import {
   Layers,
 } from 'lucide-react';
 import { api } from '../services/api';
-import type { Category, Warehouse, Location, Product, ReorderRule, DocumentType, OperationStatus } from '../types';
+import type {
+  Category,
+  Warehouse,
+  Location,
+  Product,
+  ReorderRule,
+  DocumentType,
+  OperationStatus,
+  OperationStatusCode,
+} from '../types';
 import { LoadingState } from '../components/ui/LoadingState';
 import { ErrorState } from '../components/ui/ErrorState';
 import { FilterDropdown } from '../components/ui/FilterDropdown';
@@ -105,10 +114,48 @@ export const Dashboard: React.FC = () => {
     return currentStock <= minStock || currentStock === 0;
   }).length;
 
-  // Placeholder operation metrics (until Member 2/4 operations populated, 0 or dynamic)
-  const pendingReceiptsCount = selectedDocType === 'Receipts' || selectedDocType === 'All' ? 0 : 0;
-  const pendingDeliveriesCount = selectedDocType === 'Delivery' || selectedDocType === 'All' ? 0 : 0;
-  const internalTransfersScheduled = selectedDocType === 'Internal' || selectedDocType === 'All' ? 0 : 0;
+  // Operation KPIs come from the operations API. "Pending" means not yet Done or
+  // Canceled, unless a specific status is selected in the filter.
+  const [operationCounts, setOperationCounts] = useState({ receipts: 0, deliveries: 0, transfers: 0 });
+  useEffect(() => {
+    const statuses: OperationStatusCode[] =
+      selectedStatus === 'All'
+        ? ['DRAFT', 'WAITING', 'READY']
+        : [selectedStatus.toUpperCase() as OperationStatusCode];
+    const count = async (
+      fetchPage: (status: OperationStatusCode, offset: number, limit: number) => Promise<unknown[]>
+    ) => {
+      let total = 0;
+      for (const status of statuses) {
+        for (let offset = 0; ; offset += 100) {
+          const page = await fetchPage(status, offset, 100);
+          total += page.length;
+          if (page.length < 100) break;
+        }
+      }
+      return total;
+    };
+    let active = true;
+    Promise.all([
+      count((st, o, l) => api.getReceipts(st, o, l)),
+      count((st, o, l) => api.getDeliveries(st, o, l)),
+      count((st, o, l) => api.getTransfers(st, o, l)),
+    ])
+      .then(([receipts, deliveries, transfers]) => {
+        if (active) setOperationCounts({ receipts, deliveries, transfers });
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [selectedStatus]);
+
+  const pendingReceiptsCount =
+    selectedDocType === 'Receipts' || selectedDocType === 'All' ? operationCounts.receipts : 0;
+  const pendingDeliveriesCount =
+    selectedDocType === 'Delivery' || selectedDocType === 'All' ? operationCounts.deliveries : 0;
+  const internalTransfersScheduled =
+    selectedDocType === 'Internal' || selectedDocType === 'All' ? operationCounts.transfers : 0;
 
   if (loading) {
     return <LoadingState message="Fetching real-time inventory metrics..." height="400px" />;
