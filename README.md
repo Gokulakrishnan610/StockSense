@@ -142,6 +142,119 @@ StockSense's Alembic migrations install PostgreSQL DDL triggers (`BEFORE UPDATE`
 | [Demo guide](docs/DEMO_GUIDE.md) | Seed data, demo accounts and a timed demo script |
 | [Docs index](docs/README.md) | All documents with a suggested reading order |
 
+---
+
+## ✅ Problem Statement Compliance
+
+> *"Build a modular Inventory Management System that digitizes and streamlines all stock-related operations within a business — replacing manual registers, Excel sheets, and scattered tracking with a centralized, real-time, easy-to-use app."*
+> — Odoo × GCET Hackathon Problem Statement
+
+Every requirement from the Odoo problem statement is addressed. Below is a full traceability map with implementation details and bonus features delivered beyond the spec.
+
+### 🔐 Authentication
+
+| What Odoo Asked | What We Built | ⭐ Bonus |
+| --- | --- | --- |
+| User signup & login | `POST /auth/signup`, `POST /auth/login` — accepts login ID **or** email | Login ID validation (6–64 chars, alphanumeric), duplicate-email guard |
+| OTP-based password reset | 3-step flow: `forgot-password → verify-otp → reset-password`; 6-digit code, 10-min expiry, 5 max attempts | HMAC-stored OTP (not plaintext), 60-sec resend cooldown, single-use reset token |
+| Redirect to dashboard after login | `redirect_to` in login response; SPA routes to `/dashboard` automatically | Token-version invalidation — logout kills **all** sessions, not just current |
+| Profile menu with My Profile & Logout | `GET /auth/me`, `POST /auth/logout` | Argon2 password hashing + HS256 JWT with issuer/audience/expiry checks |
+
+### 📊 Dashboard
+
+| What Odoo Asked | What We Built | ⭐ Bonus |
+| --- | --- | --- |
+| KPI: Total Products in Stock | Live count from `GET /inventory/stock` | Per-warehouse and per-location breakdown |
+| KPI: Low Stock / Out of Stock Items | `GET /inventory/alerts/low-stock` + zero-balance products | SSE real-time toast + Celery email to managers on breach |
+| KPI: Pending Receipts | Open receipts (DRAFT, WAITING, READY) via `GET /operations/summary` | Pending count badge on sidebar nav items |
+| KPI: Pending Deliveries | Open deliveries (same API) | — |
+| KPI: Internal Transfers Scheduled | Open transfers (same API) | — |
+| Filter by document type | Receipt / Delivery / Internal / Adjustment tab filter | Combined filter with status simultaneously |
+| Filter by status | DRAFT, WAITING, READY, DONE, CANCELED | `?status=` query param on every list endpoint |
+| Filter by warehouse or location | Warehouse + location dropdowns on dashboard and ledger | Cascading: selecting warehouse auto-narrows location list |
+| Filter by product category | Category filter on dashboard and move history | Category CRUD with delete-guard (cannot delete if products reference it) |
+
+### 📦 Product Management
+
+| What Odoo Asked | What We Built | ⭐ Bonus |
+| --- | --- | --- |
+| Create products: Name, SKU, Category, UOM | `POST /products` with all fields; SKU globally unique | `PUT /products/{id}` full update; SKU immutability enforced |
+| Initial stock (optional) | `initial_stock` + `initial_location_id` → posts `INITIAL` ledger entry | Opening stock visible in Move History from day one |
+| Stock availability per location | `GET /products/{id}/stock` — per-location balance breakdown | Zero-balance locations shown; product detail page aggregates totals |
+| Product categories | `/categories` CRUD | Delete blocked if any product references the category |
+| Reorder rules | `/reorder-rules` with `minimum_stock` + `reorder_quantity` | Auto low-stock alert triggers when balance falls below rule threshold |
+| SKU search & smart filters | `GET /products?search=&category_id=&warehouse_id=&location_id=` | Real-time frontend search debounce; multi-filter combination |
+
+### 📥 Receipts (Incoming Stock)
+
+| What Odoo Asked | What We Built | ⭐ Bonus |
+| --- | --- | --- |
+| Create a new receipt | `POST /receipts` → DRAFT status | Supplier field + reference auto-generated as `REC-{uuid8}` |
+| Add supplier & products | `supplier` header + `POST /receipts/{id}/items` per line | Multi-line receipt with per-line destination location |
+| Input quantities received | `quantity > 0`, up to 4 decimal places | Quantity stored as `NUMERIC(18,4)` — no float drift |
+| Validate → stock increases | `POST /receipts/{id}/validate` → `RECEIPT` ledger rows, `+q` per line | **Atomic**: all lines succeed or all roll back. SSE toast fires immediately. |
+| DRAFT → WAITING → READY → DONE flow | Full 4-stage workflow with `mark-waiting`, `mark-ready`, `validate` | `DONE` and `CANCELED` documents immutable — no re-edit or re-validate |
+
+### 📤 Delivery Orders (Outgoing Stock)
+
+| What Odoo Asked | What We Built | ⭐ Bonus |
+| --- | --- | --- |
+| Pick items | `POST /deliveries/{id}/pick` (DRAFT → WAITING) | Pick action logs actor (`created_by`) |
+| Pack items | `POST /deliveries/{id}/pack` (WAITING → READY) | — |
+| Validate → stock decreases | `POST /deliveries/{id}/validate` deducts per line | `409 INSUFFICIENT_STOCK` returned atomically — nothing posted on failure |
+| Cancel | `POST /deliveries/{id}/cancel` | Cancel blocked on DONE documents |
+
+### 🔁 Internal Transfers
+
+| What Odoo Asked | What We Built | ⭐ Bonus |
+| --- | --- | --- |
+| Move stock: Main Warehouse → Production Floor, Rack A → Rack B, Warehouse 1 → Warehouse 2 | Transfer lines with `source_location_id` + `destination_location_id`; any location pair across any warehouse | — |
+| Every movement logged in ledger | Two `TRANSFER` ledger rows per line (`:src` and `:dst`) | `entry_key` uniqueness prevents duplicate postings |
+| Total stock unchanged, location updated | `−q` and `+q` in the **same DB transaction** | Global balance invariant enforced at service layer |
+| Reject same-location transfer | `422 SAME_LOCATION` error | Validated at both API schema layer (Pydantic) and service layer |
+
+### 🔧 Stock Adjustments
+
+| What Odoo Asked | What We Built | ⭐ Bonus |
+| --- | --- | --- |
+| Select product & location | `POST /adjustments` with `product_id`, `location_id` | — |
+| Enter counted quantity | `counted_quantity >= 0`, reason required | Reason is mandatory — no silent quantity changes |
+| System auto-updates & logs | `delta = counted − recorded`; posts `ADJUSTMENT` ledger row only if delta ≠ 0 | Zero-delta adjustments skip the ledger cleanly (no noise in history) |
+
+### 📜 Move History (Stock Ledger)
+
+| What Odoo Asked | What We Built | ⭐ Bonus |
+| --- | --- | --- |
+| Log every stock movement | Append-only `stock_ledger` table | PostgreSQL `BEFORE UPDATE / DELETE / TRUNCATE` triggers make it **physically immutable** |
+| Filter the history | `GET /inventory/ledger?product_id&location_id&warehouse_id&category_id&transaction_type&reference_id&date_from&date_to` | 8-dimension filter combination in one query |
+| Show before/after quantities & who did it | `before_quantity`, `after_quantity`, `user_name` displayed in table | Reference links back to originating operation document |
+
+### ⚙️ Settings
+
+| What Odoo Asked | What We Built | ⭐ Bonus |
+| --- | --- | --- |
+| Warehouse settings | `/warehouses` full CRUD (no delete to preserve ledger integrity) | Warehouse detail page shows all locations + live stock totals |
+| Multi-warehouse support | Locations belong to a warehouse; balances are per product × location | Transfer across warehouses natively supported |
+| Locations | `/locations` with short code unique within its warehouse | Location codes prevent naming collisions across warehouses |
+
+### ⭐ Beyond the Spec — Bonus Features
+
+| Feature | Description |
+| --- | --- |
+| **Real-Time SSE Notifications** | `GET /stream` broadcasts `STOCK_UPDATE` and `LOW_STOCK_ALERT` events; browser renders toast without polling |
+| **Celery Email Worker** | OTP emails, low-stock manager alerts via background Celery task with Redis broker — SMTP outage never blocks HTTP responses |
+| **Immutable Audit Triggers** | PostgreSQL DDL triggers on `stock_ledger` physically block any mutation — not just application-level guards |
+| **Concurrent Validation Safety** | `SELECT ... FOR UPDATE` on product rows in sorted UUID order prevents deadlocks under parallel validation |
+| **Idempotent Ledger Entries** | `entry_key` unique constraint makes ledger posting safe to retry without double-counting |
+| **OTP Security Hardening** | HMAC-stored OTP (not plaintext), 60-sec resend cooldown, 5-attempt lockout, single-use reset token |
+| **Role-Based Access Control** | `INVENTORY_MANAGER` vs `WAREHOUSE_STAFF`; manager dependency guards all catalog write endpoints |
+| **Seed Dataset** | `seed.py` populates 50+ products, categories, warehouses, locations, and demo accounts for instant demo |
+| **Swagger / ReDoc Auto-docs** | FastAPI + Pydantic V2 auto-generates OpenAPI 3.1 schema at `/docs` and `/redoc` — zero extra effort |
+| **Printable Operation Slips** | Browser print-optimized CSS on every operation detail page |
+| **89 Backend Test Cases** | pytest suite covering auth, catalog, stock math, operation workflows, concurrency, and ledger integrity |
+
+---
+
 ## Overview
 
 StockSense centralizes products, warehouse locations, incoming receipts, outgoing deliveries, internal transfers, and physical stock counts. Inventory managers maintain the catalog; warehouse staff execute stock operations. Validated movements update location balances and record signed changes in the stock ledger.
