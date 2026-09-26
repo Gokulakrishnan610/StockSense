@@ -99,6 +99,7 @@ export function OperationList<T extends OperationRecord>({
             fontWeight: 700,
             fontFamily: 'monospace',
             color: 'var(--color-primary)',
+            whiteSpace: 'nowrap',
           }}
         >
           {docRef(kind, row.id)}
